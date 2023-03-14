@@ -152,7 +152,7 @@ class Private_Media_Request_Handler {
 		$file   = apply_filters( 'pvtmed_file', $file );
 		$status = apply_filters( 'pvtmed_status', $status, $file );
 
-		status_header( $status );
+		status_header( intval( $status ) );
 
 		if ( '403' === $status ) {
 			$redirect = apply_filters( 'pvtmed_forbidden_redirect', false, $file );
