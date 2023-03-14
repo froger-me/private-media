@@ -82,7 +82,7 @@ class Private_Media_Attachment_Manager {
 	}
 
 	public function apply_plugin_private_policy( $apply ) {
-		$attachment_ids = $this->get_all_private_attachement_ids();
+		$attachment_ids = $this->get_all_private_attachment_ids();
 		$operation      = ( $apply ) ? 'private' : 'public';
 
 		if ( ! empty( $attachment_ids ) ) {
@@ -165,7 +165,7 @@ class Private_Media_Attachment_Manager {
 		}
 	}
 
-	protected function get_all_private_attachement_ids() {
+	protected function get_all_private_attachment_ids() {
 		$args  = array(
 			'fields'      => 'ids',
 			'post_type'   => 'attachment',

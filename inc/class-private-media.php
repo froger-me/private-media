@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Private_Media {
 
 	protected $request_handler;
-	protected $attachement_manager;
+	protected $attachment_manager;
 
 	protected static $doing_private_media_api_request;
 
