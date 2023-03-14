@@ -1,0 +1,7 @@
+{
+    "remove-tabs-on-save.ignoreFileExtensions": [
+        "first-time",
+        "*.go",
+        "*"
+    ]
+}
