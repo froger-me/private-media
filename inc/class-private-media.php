@@ -220,14 +220,16 @@ class Private_Media {
 		global $wp_roles;
 
 		//get roles and attachment permissions
-		$roles       = $wp_roles->get_names();
-		$permissions = get_post_meta( $attachment['ID'], 'pvtmed_settings', true );
+		$attachment_id = $attachment['ID'];
+		$roles         = $wp_roles->get_names();
+		$permissions   = get_post_meta( $attachment_id, 'pvtmed_settings', true );
 
 		if ( empty( $permissions ) ) {
 			$permissions = [];
 		}
 
-		//cbxx TODO allow custom filters
+		//add custom permissions
+		$permissions = apply_filters('pvtmed_add_permissions', $permissions, $attachment, $fields);
 
 		//check all roles
 		foreach ( $roles as $key => $role_name ) {
@@ -246,23 +248,23 @@ class Private_Media {
 			$mime_type = $attachment['post_mime_type'];
 
 			//skip URL updates for video/audio HTML in activation/deactivation of plugin
-			if ( 0 === strpos( $attachment['post_mime_type'], 'video' ) ) {
+			if ( 0 === strpos( $mime_type, 'video' ) ) {
 				update_option( 'pvtmed_deactivate_migrate_video', true, false );
 			}
 
-			if ( 0 === strpos( $attachment['post_mime_type'], 'audio' ) ) {
+			if ( 0 === strpos( $mime_type, 'audio' ) ) {
 				update_option( 'pvtmed_deactivate_migrate_audio', true, false );
 			}
 
 			//move the files
-			$this->attachment_manager->move_media( $attachment['ID'], 'private' );
+			$this->attachment_manager->move_media( $attachment_id, 'private' );
 		} else {
 			//public file
-			$this->attachment_manager->move_media( $attachment['ID'], 'public' );
+			$this->attachment_manager->move_media( $attachment_id, 'public' );
 		}
 
 		//write permissions
-		update_post_meta( $attachment['ID'], 'pvtmed_settings', $permissions );
+		update_post_meta( $attachment_id, 'pvtmed_settings', $permissions );
 
 		return $attachment;
 	}
@@ -291,6 +293,8 @@ class Private_Media {
 		//always private checkbox (define access rules later or by custom filter)
 		$always_private = ( isset( $permissions['always_private'] ) && 1 === $permissions['always_private'] ) ? 'checked' : '';
 
+		//cbxx check layout
+		$role_boxes .= '<li><input type="checkbox" name="attachments[' . $attachment->ID . '][pvtmed_always_private]" id="attachments[pvtmed_always_private]" ><label for="shariff_metabox_disable" value="1" ' . $always_private . '>' . __( 'Private file (always kept private)', 'pvtmed' ) .'</label></li>';
 		$role_boxes .= '<li><span>' . __( 'Private file (always kept private)', 'pvtmed' ) . '</span><input type="checkbox" name="attachments[' . $attachment->ID . '][pvtmed_always_private]" id="attachments[pvtmed_always_private]" value="1" ' . $always_private . '/></li>';
 		$role_boxes .= '<li> <hr/> </li>';
 
@@ -317,11 +321,14 @@ class Private_Media {
 		//end of UI
 		$role_boxes .= '</ul></div>';
 
-		$form_fields['pvtmed'] = array(
+		$form_fields['pvtmed'] = [
 			'label' => __( 'Media Privacy', 'pvtmed' ),
 			'input' => 'html',
 			'html'  => $role_boxes
-		);
+		];
+
+		//debug cbxx
+		$this->debug($form_fields);
 
 		return $form_fields;
 	}
