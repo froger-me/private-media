@@ -39,6 +39,9 @@ class Private_Media {
 				//frontend script
 				$loadFrontendEverywhere = apply_filters( 'pvtmed_load_frontend', true );
 
+				//debug cbxx
+				$this->debug($loadFrontendEverywhere);
+
 				if ($loadFrontendEverywhere) {
 					add_action( 'wp_enqueue_scripts', array( $this, 'add_frontend_scripts' ), -10, 0 );
 				}
@@ -337,8 +340,6 @@ class Private_Media {
 	 * Used to workaround invalid URLs.
 	 */
 	public function add_frontend_scripts() {
-		global $wp_scripts;
-
 		$debug = (bool) ( constant( 'WP_DEBUG' ) );
 
 		$upload_dir         = wp_upload_dir();
@@ -381,7 +382,7 @@ class Private_Media {
 		$private_upload_url = apply_filters( 'pvtmed_private_upload_url', $private_upload_url );
 
 		$js_ext  = ( $debug ) ? '.js' : '.min.js';
-		$version = filemtime( PVTMED_PLUGIN_PATH . 'assets/js/main' . $js_ext );
+		$version = filemtime( PVTMED_PLUGIN_PATH . 'assets/js/tinymce' . $js_ext );
 
 		printf( '<script type="text/javascript" src="%s"></script>', PVTMED_PLUGIN_URL . 'assets/js/tinymce' . $js_ext . '?ver=' . $version ); // @codingStandardsIgnoreLine
 	}
@@ -419,12 +420,13 @@ class Private_Media {
 			$ext     = ( $debug ) ? '.css' : '.min.css';
 			$version = filemtime( PVTMED_PLUGIN_PATH . 'assets/css/admin/main' . $ext );
 
+			//load frontend scripts too
 			$this->add_frontend_scripts();
 
 			wp_enqueue_style(
 				'pvtmed-admin-main',
 				PVTMED_PLUGIN_URL . 'assets/css/admin/main' . $ext,
-				array(),
+				[],
 				$version
 			);
 		}
@@ -465,6 +467,14 @@ class Private_Media {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Debug function.
+	 */
+	protected function debug($msg, $params = []) {
+		//pass to Quer Monitor
+		do_action('qm/debug', $msg, $params);
 	}
 }
 
