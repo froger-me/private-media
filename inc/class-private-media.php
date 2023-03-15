@@ -36,15 +36,7 @@ class Private_Media {
 				add_action( 'init', array( $this, 'maybe_flush' ), 99, 0 );
 				add_action( 'init', array( $this, 'load_textdomain' ), 10, 0 );
 
-				//frontend script
-				$loadFrontendEverywhere = apply_filters( 'pvtmed_load_frontend', true );
-
-				//debug cbxx
-				$this->debug($loadFrontendEverywhere);
-
-				if ($loadFrontendEverywhere) {
-					add_action( 'wp_enqueue_scripts', array( $this, 'add_frontend_scripts' ), -10, 0 );
-				}
+				add_action( 'wp_enqueue_scripts', array( $this, 'add_frontend_scripts' ), -10, 0 );
 
 				if ( is_admin() ) {
 					add_action( 'wp_tiny_mce_init', array( $this, 'add_wp_tiny_mce_init_script' ), -10, 0 );
@@ -340,6 +332,11 @@ class Private_Media {
 	 * Used to workaround invalid URLs.
 	 */
 	public function add_frontend_scripts() {
+		//check non-admin usage
+		if (!is_admin() && !apply_filters( 'pvtmed_load_frontend', true )) {
+			return;
+		}
+
 		$debug = (bool) ( constant( 'WP_DEBUG' ) );
 
 		$upload_dir         = wp_upload_dir();
