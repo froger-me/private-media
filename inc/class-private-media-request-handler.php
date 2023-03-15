@@ -110,7 +110,10 @@ class Private_Media_Request_Handler {
 			$attachment         = get_post( $attachment_id );
 			$post_parent_id     = $attachment->post_parent;
 
-			//cbxx TODO custom filter
+			//call filter first (overwrite default behavior)
+		 	if (apply_filters( 'pvtmed_has_permissions', false, $attachment, $permissions )) {
+				return true;
+			}
 
 			//Note: always private mode has no effect on other permissions (could mean no access at all i.e. fully protected)
 
