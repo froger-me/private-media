@@ -293,8 +293,6 @@ class Private_Media {
 		//always private checkbox (define access rules later or by custom filter)
 		$always_private = ( isset( $permissions['always_private'] ) && 1 === $permissions['always_private'] ) ? 'checked' : '';
 
-		//cbxx check layout
-		$role_boxes .= '<li><input type="checkbox" name="attachments[' . $attachment->ID . '][pvtmed_always_private]" id="attachments[pvtmed_always_private]" ><label for="shariff_metabox_disable" value="1" ' . $always_private . '>' . __( 'Private file (always kept private)', 'pvtmed' ) .'</label></li>';
 		$role_boxes .= '<li><span>' . __( 'Private file (always kept private)', 'pvtmed' ) . '</span><input type="checkbox" name="attachments[' . $attachment->ID . '][pvtmed_always_private]" id="attachments[pvtmed_always_private]" value="1" ' . $always_private . '/></li>';
 		$role_boxes .= '<li> <hr/> </li>';
 
@@ -327,8 +325,8 @@ class Private_Media {
 			'html'  => $role_boxes
 		];
 
-		//debug cbxx
-		$this->debug($form_fields);
+		//debug
+		//$this->debug($form_fields);
 
 		return $form_fields;
 	}
