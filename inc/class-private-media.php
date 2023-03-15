@@ -44,10 +44,6 @@ class Private_Media {
 				}
 
 				if ( is_admin() ) {
-					if (!$loadFrontendEverywhere) {
-						add_action( 'wp_enqueue_scripts', array( $this, 'add_frontend_scripts' ), -10, 0 );
-					}
-
 					add_action( 'wp_tiny_mce_init', array( $this, 'add_wp_tiny_mce_init_script' ), -10, 0 );
 
 					add_filter( 'admin_enqueue_scripts', array( $this, 'add_admin_scripts' ), -10, 1 );
