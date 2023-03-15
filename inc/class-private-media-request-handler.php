@@ -112,6 +112,8 @@ class Private_Media_Request_Handler {
 
 			//cbxx TODO custom filter
 
+			//Note: always private mode has no effect on other permissions (could mean no access at all i.e. fully protected)
+
 			//check hotlinking
 			$hotlink_authorized = true;
 

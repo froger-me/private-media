@@ -205,10 +205,13 @@ class Private_Media {
 			exit();
 		}
 
-		//cbxx TODO make optional
+		//check hotlinking support
+		$hotlinkFeature = apply_filters( 'pvtmed_hotlink_feature', true );
 
-		//not a private media access -> set hotlink cookie
-		setcookie( 'pvtmed', 1, current_time( 'timestamp' ) + 10, '/' );
+		if ($hotlinkFeature) {
+			//not a private media access -> set hotlink cookie
+			setcookie( 'pvtmed', 1, current_time( 'timestamp' ) + 10, '/' );
+		}
 	}
 
 	/**
@@ -239,6 +242,9 @@ class Private_Media {
 		foreach ( $roles as $key => $role_name ) {
 			$permissions[ $key ] = ( isset( $fields[ 'pvtmed_' . $key ] ) ) ? 1 : 0;
 		}
+
+		//check always private
+		$permissions['always_private'] = ( isset( $fields['pvtmed_always_private'] ) ) ? 1 : 0;
 
 		//check hotlinking
 		$permissions['disable_hotlinks'] = ( isset( $fields['pvtmed_disable_hotlinks'] ) ) ? 1 : 0;
@@ -276,26 +282,39 @@ class Private_Media {
 	public function attachment_field_settings( $form_fields, $attachment ) {
 		//cbxx TODO show on top of page
 		//cbxx TODO improve layout
-		//cbxx TODO support always private checkbox
-		//cbxx TODO add filter to disable hotlinking feature (cookie & settings)
 
 		//get permissions
 		$permissions = get_post_meta( $attachment->ID, 'pvtmed_settings', true );
 
 		global $wp_roles;
 
-		//get all roles
-		$roles       = $wp_roles->get_names();
-		$no_hotlinks = ( isset( $permissions['disable_hotlinks'] ) && 1 === $permissions['disable_hotlinks'] ) ? 'checked' : '';
-		$role_boxes  = '<div class="setting">';
+		$role_boxes = '<div class="setting">';
 
+		//show warning if file is being used
 		if ( $attachment->post_parent && -1 !== strpos( $attachment->post_mime_type, 'image' ) ) {
 			$role_boxes .= '<em>' . __( 'Warning: This media is already attached to at least one existing post. You may need to re-insert it to make sure it is still accessible after changing its Media Privacy settings.', 'pvtmed' ) . '</em>';
 		}
 
 		$role_boxes .= '<ul>';
-		$role_boxes .= '<li><span>' . __( 'Prevent hotlinks (even when not limited by role)', 'pvtmed' ) . '</span><input type="checkbox" name="attachments[' . $attachment->ID . '][pvtmed_disable_hotlinks]" id="attachments[pvtmed_disable_hotlinks]" value="1" ' . $no_hotlinks . '/></li>';
+
+		//always private checkbox (define access rules later or by custom filter)
+		$always_private = ( isset( $permissions['always_private'] ) && 1 === $permissions['always_private'] ) ? 'checked' : '';
+
+		$role_boxes .= '<li><span>' . __( 'Private file (always kept private)', 'pvtmed' ) . '</span><input type="checkbox" name="attachments[' . $attachment->ID . '][pvtmed_always_private]" id="attachments[pvtmed_always_private]" value="1" ' . $always_private . '/></li>';
 		$role_boxes .= '<li> <hr/> </li>';
+
+		//hotlinking checkbox
+		$hotlinkFeature = apply_filters( 'pvtmed_hotlink_feature', true );
+
+		if ($hotlinkFeature) {
+			$no_hotlinks = ( isset( $permissions['disable_hotlinks'] ) && 1 === $permissions['disable_hotlinks'] ) ? 'checked' : '';
+
+			$role_boxes .= '<li><span>' . __( 'Prevent hotlinks (even when not limited by role)', 'pvtmed' ) . '</span><input type="checkbox" name="attachments[' . $attachment->ID . '][pvtmed_disable_hotlinks]" id="attachments[pvtmed_disable_hotlinks]" value="1" ' . $no_hotlinks . '/></li>';
+			$role_boxes .= '<li> <hr/> </li>';
+		}
+
+		//role checkboxes
+		$roles = $wp_roles->get_names();
 
 		foreach ( $roles as $key => $role_name ) {
 			$role_checked = ( isset( $permissions[ $key ] ) && 1 === $permissions[ $key ] ) ? 'checked' : '';
@@ -304,12 +323,13 @@ class Private_Media {
 			$role_boxes .= '<li><span>' . sprintf( __( 'Limit to %s role' ), $role_name ) . '</span><input type="checkbox" name="attachments[' . $attachment->ID . '][pvtmed_' . $key . ']" id="attachments[pvtmed_' . $key . ']" value="' . $key . '" ' . $role_checked . '/></li>';
 		}
 
+		//end of UI
 		$role_boxes .= '</ul></div>';
 
 		$form_fields['pvtmed'] = array(
 			'label' => __( 'Media Privacy', 'pvtmed' ),
 			'input' => 'html',
-			'html'  => $role_boxes,
+			'html'  => $role_boxes
 		);
 
 		return $form_fields;
