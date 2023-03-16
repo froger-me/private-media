@@ -128,9 +128,17 @@ jQuery(document).ready(function ($) {
         console.dir(html);
 
         //store in DOM
+        const script = document.createElement('script');
+
+        script.innerHTML = html;
+
+        document.head.appendChild(script);
+
+        /*
         $('body').append($('<script type="text/html" id="tmpl-attachment-pvtmed" />', {
             html
         }));
+        */
 
         //use new template
         wp.media.view.Attachment.prototype.template = wp.media.template('attachment-pvtmed');
