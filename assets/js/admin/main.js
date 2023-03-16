@@ -130,6 +130,7 @@ jQuery(document).ready(function ($) {
         //store in DOM
         const script = document.createElement('script');
 
+        script.type = 'text/html';
         script.innerHTML = html;
 
         document.head.appendChild(script);
