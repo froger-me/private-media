@@ -340,10 +340,10 @@ class Private_Media {
 	 */
 	public function attachment_js_data( $response, $attachment, $meta ) {
 		//add private media flag
-		$response['privateMedia'] = $meta['pvtmed_private'] ?? false;
+		$response['privateMedia'] = get_post_meta( $attachment->ID, 'pvtmed_private', true ) === true;
 
-		//debug cbxx
-		$response['allMeta'] = $meta;
+		//debug
+		//$response['allMeta'] = $meta;
 
 		return $response;
 	}
