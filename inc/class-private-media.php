@@ -26,24 +26,26 @@ class Private_Media {
 
 		if ( $init_hooks ) {
 			//request handling
-			add_filter( 'query_vars', array( $this, 'add_query_vars' ), -10, 1 );
-			add_action( 'parse_request', array( $this, 'parse_request' ), -10, 0 );
+			add_filter( 'query_vars', [ $this, 'add_query_vars' ], -10, 1 );
+			add_action( 'parse_request', [ $this, 'parse_request' ], -10, 0 );
 
 			if ( ! self::is_doing_api_request() ) {
 				//general handling
-				add_action( 'init', array( $this, 'add_endpoints' ), -10, 0 );
-				add_action( 'init', array( $this, 'register_activation_notices' ), 99, 0 );
-				add_action( 'init', array( $this, 'maybe_flush' ), 99, 0 );
-				add_action( 'init', array( $this, 'load_textdomain' ), 10, 0 );
+				add_action( 'init', [ $this, 'add_endpoints' ], -10, 0 );
+				add_action( 'init', [ $this, 'register_activation_notices' ], 99, 0 );
+				add_action( 'init', [ $this, 'maybe_flush' ], 99, 0 );
+				add_action( 'init', [ $this, 'load_textdomain' ], 10, 0 );
 
-				add_action( 'wp_enqueue_scripts', array( $this, 'add_frontend_scripts' ), -10, 0 );
+				add_action( 'wp_enqueue_scripts', [ $this, 'add_frontend_scripts' ], -10, 0 );
 
 				if ( is_admin() ) {
-					add_action( 'wp_tiny_mce_init', array( $this, 'add_wp_tiny_mce_init_script' ), -10, 0 );
+					add_action( 'wp_tiny_mce_init', [ $this, 'add_wp_tiny_mce_init_script' ], -10, 0 );
 
-					add_filter( 'admin_enqueue_scripts', array( $this, 'add_admin_scripts' ), -10, 1 );
-					add_filter( 'attachment_fields_to_save', array( $this, 'attachment_field_settings_save' ), 10, 2 );
-					add_filter( 'attachment_fields_to_edit', array( $this, 'attachment_field_settings' ), 10, 2 );
+					add_filter( 'admin_enqueue_scripts', [ $this, 'add_admin_scripts' ], -10, 1 );
+					add_filter( 'attachment_fields_to_save', [ $this, 'attachment_field_settings_save' ], 10, 2 );
+					add_filter( 'attachment_fields_to_edit', [ $this, 'attachment_field_settings' ], 10, 2 );
+
+					add_filter( 'wp_prepare_attachment_for_js', [ $this, 'attachment_js_data '], 10, 3 );
 				}
 			}
 		}
@@ -331,6 +333,16 @@ class Private_Media {
 		//$this->debug($form_fields);
 
 		return $form_fields;
+	}
+
+	/**
+	 * Add data for JavaScript rendering.
+	 */
+	public function attachment_js_data( $response, $attachment, $meta ) {
+		//add private media flag
+		$response['privateMedia'] = $meta['pvtmed_private'] ?? false;
+
+		return $response;
 	}
 
 	/**

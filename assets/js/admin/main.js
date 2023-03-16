@@ -1,8 +1,8 @@
 /* global Pvtmed, wp */
 
 jQuery(document).ready(function ($) {
-    //debug cbxx
-    console.dir(Pvtmed);
+    //debug
+    //console.dir(Pvtmed);
 
     const label   = $('.compat-field-pvtmed th').html();
     const content = $('.compat-field-pvtmed .field').html();
@@ -68,10 +68,15 @@ jQuery(document).ready(function ($) {
         });
     }
 
-    //modify grid template
-    //cbxx TODO
-    if (wp.media.view.Attachment) {
-        //debug cbxx
+    /**
+     * Display a lock icon on private files.
+     */
+    function showAttachmentPrivateIcon() {
+        if (!wp.media.view.Attachment) {
+            return;
+        }
+
+        //debug
         //console.dir(wp.media.view.Attachment);
         //console.dir(wp.media.view.Attachment.prototype.template);
 
@@ -115,11 +120,10 @@ jQuery(document).ready(function ($) {
             //modify
             const imgHtml = template.substring(startPos, endPos);
 
-            //cbxx TODO add private check
-            //html += '<div class="pvtmed-thumbnail">';
             html += imgHtml;
+            html += '<# if ( data.privateMedia ) { #>';
             html += '<span class="dashicons dashicons-lock"></span>';
-            //html += '</div>';
+            html += '<# } #>';
         }
 
         html += template.substring(lastPos);
@@ -145,6 +149,9 @@ jQuery(document).ready(function ($) {
         //use new template
         wp.media.view.Attachment.prototype.template = wp.media.template('attachment-pvtmed');
 
-        //cbxx TODO
+
+        //cbxx FIXME need data flag
     }
+
+    showAttachmentPrivateIcon();
 });
