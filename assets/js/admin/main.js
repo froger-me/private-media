@@ -116,10 +116,10 @@ jQuery(document).ready(function ($) {
             const imgHtml = template.substring(startPos, endPos);
 
             //cbxx TODO add private check
-            html += '<div class="pvtmed-thumbnail">';
+            //html += '<div class="pvtmed-thumbnail">';
             html += imgHtml;
             html += '<span class="dashicons dashicons-lock"></span>';
-            html += '</div>';
+            //html += '</div>';
         }
 
         html += template.substring(lastPos);
@@ -132,7 +132,7 @@ jQuery(document).ready(function ($) {
 
         script.type = 'text/html';
         script.id = 'tmpl-attachment-pvtmed';
-        script.innerHTML = html;
+        script.innerHTML = '<div class="pvtmed-attachment">' + html + '</div>';
 
         document.head.appendChild(script);
 
