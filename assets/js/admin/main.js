@@ -69,7 +69,14 @@ jQuery(document).ready(function ($) {
     //cbxx TODO
     if (wp.media.view.Attachment) {
         //debug cbxx
-        console.dir(wp.media.view.Attachment);
-        console.dir(wp.media.view.Attachment.prototype.template);
+        //console.dir(wp.media.view.Attachment);
+        //console.dir(wp.media.view.Attachment.prototype.template);
+
+        const template = $('#tmpl-attachment');
+
+        //debug cbxx
+        console.dir(template);
+        console.dir(template.text());
+        console.dir(template.html());
     }
 });
