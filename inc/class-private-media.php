@@ -342,6 +342,9 @@ class Private_Media {
 		//add private media flag
 		$response['privateMedia'] = $meta['pvtmed_private'] ?? false;
 
+		//debug cbxx
+		$response['allMeta'] = $meta;
+
 		return $response;
 	}
 
