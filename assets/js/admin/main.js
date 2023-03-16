@@ -131,6 +131,7 @@ jQuery(document).ready(function ($) {
         const script = document.createElement('script');
 
         script.type = 'text/html';
+        script.id = 'tmpl-attachment-pvtmed';
         script.innerHTML = html;
 
         document.head.appendChild(script);
