@@ -472,7 +472,7 @@ class Private_Media_Attachment_Manager {
 		update_attached_file( $attachment_id, str_replace( $destination_basedir, $source_basedir, $file_path ) );
 
 		if ( $update_meta ) {
-			//set the private post meta flag
+			//set the private post meta flag (Note: boolean is stored as '1'/'' for true/false)
 			update_post_meta( $attachment_id, 'pvtmed_private', ( 'private' === $operation ) );
 		}
 	}

@@ -235,14 +235,26 @@ class Private_Media {
 
 		//check all roles
 		foreach ( $roles as $key => $role_name ) {
-			$permissions[ $key ] = ( isset( $fields[ 'pvtmed_' . $key ] ) ) ? 1 : 0;
+			if ( isset( $fields[ 'pvtmed_' . $key ] ) ) {
+				$permissions[ $key ] = 1;
+			} else {
+				unset( $permissions[ $key ] );
+			}
 		}
 
 		//check always private
-		$permissions['always_private'] = ( isset( $fields['pvtmed_always_private'] ) ) ? 1 : 0;
+		if ( isset( $fields['pvtmed_always_private'] ) ) {
+			$permissions['always_private'] = 1;
+		} else {
+			unset( $permissions['always_private'] );
+		}
 
 		//check hotlinking
-		$permissions['disable_hotlinks'] = ( isset( $fields['pvtmed_disable_hotlinks'] ) ) ? 1 : 0;
+		if ( isset( $fields['pvtmed_disable_hotlinks'] ) ) {
+			$permissions['disable_hotlinks'] = 1;
+		} else {
+			unset( $permissions['disable_hotlinks'] );
+		}
 
 		//check one value is active (private file)
 		if ( in_array( 1, array_values( $permissions ), true ) ) {
@@ -340,13 +352,12 @@ class Private_Media {
 	 */
 	public function attachment_js_data( $response, $attachment, $meta ) {
 		//add private media flag
-		//cbxx FIXME does not work
-		$response['privateMedia'] = get_post_meta( $attachment->ID, 'pvtmed_private', true ) === true;
+		$response['privateMedia'] = get_post_meta( $attachment->ID, 'pvtmed_private', true ) === '1';
 
-		//debug cbxx
+		//debug
 		//$response['allMeta'] = $meta;
-		$response['allMeta'] = get_post_meta( $attachment->ID );
-		$response['privateMediaRaw'] = get_post_meta( $attachment->ID, 'pvtmed_private', true );
+		//$response['allMeta'] = get_post_meta( $attachment->ID );
+		//$response['privateMediaRaw'] = get_post_meta( $attachment->ID, 'pvtmed_private', true );
 
 		return $response;
 	}

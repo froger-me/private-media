@@ -148,9 +148,6 @@ jQuery(document).ready(function ($) {
 
         //use new template
         wp.media.view.Attachment.prototype.template = wp.media.template('attachment-pvtmed');
-
-
-        //cbxx FIXME need data flag
     }
 
     showAttachmentPrivateIcon();
