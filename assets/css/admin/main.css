@@ -74,20 +74,22 @@
 
 /* media grid icon */
 
-.thumbnail .centered {
+.pvtmed-attachment .thumbnail .centered {
   position: relative !important;
   transform: none !important;
 
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
-.thumbnail .centered img {
+.pvtmed-attachment .thumbnail .centered img {
   display: block;
   transform: none !important;
+  position: static !important;
 }
 
-.thumbnail .centered span {
+.pvtmed-attachment .thumbnail .centered span {
   position: absolute;
   width: 10px;
   height: 10px;
