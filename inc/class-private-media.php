@@ -273,9 +273,6 @@ class Private_Media {
 	 * Display attachments settings.
 	 */
 	public function attachment_field_settings( $form_fields, $attachment ) {
-		//cbxx TODO show on top of page
-		//cbxx TODO improve layout
-
 		//get permissions
 		$permissions = get_post_meta( $attachment->ID, 'pvtmed_settings', true );
 

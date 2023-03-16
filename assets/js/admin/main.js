@@ -115,6 +115,7 @@ jQuery(document).ready(function ($) {
             //modify
             const imgHtml = template.substring(startPos, endPos);
 
+            //cbxx TODO add private check
             html += '<div class="pvtmed-thumbnail">';
             html += imgHtml;
             html += '<span class="dashicons dashicons-lock"></span>';
@@ -125,6 +126,14 @@ jQuery(document).ready(function ($) {
 
         //debug cbxx
         console.dir(html);
+
+        //store in DOM
+        $('body').append($('<script type="text/html" id="tmpl-attachment-pvtmed" />', {
+            html
+        }));
+
+        //use new template
+        wp.media.view.Attachment.prototype.template = wp.media.template('attachment-pvtmed');
 
         //cbxx TODO
     }
