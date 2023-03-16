@@ -340,10 +340,13 @@ class Private_Media {
 	 */
 	public function attachment_js_data( $response, $attachment, $meta ) {
 		//add private media flag
+		//cbxx FIXME does not work
 		$response['privateMedia'] = get_post_meta( $attachment->ID, 'pvtmed_private', true ) === true;
 
-		//debug
+		//debug cbxx
 		//$response['allMeta'] = $meta;
+		$response['allMeta'] = get_post_meta( $attachment->ID );
+		$response['privateMediaRaw'] = get_post_meta( $attachment->ID, 'pvtmed_private', true );
 
 		return $response;
 	}
