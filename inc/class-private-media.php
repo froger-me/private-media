@@ -354,9 +354,9 @@ class Private_Media {
 		//add private media flag
 		$response['privateMedia'] = get_post_meta( $attachment->ID, 'pvtmed_private', true ) === '1';
 
-		//debug
+		//debug cbxx
 		//$response['allMeta'] = $meta;
-		//$response['allMeta'] = get_post_meta( $attachment->ID );
+		$response['allMeta'] = get_post_meta( $attachment->ID );
 		//$response['privateMediaRaw'] = get_post_meta( $attachment->ID, 'pvtmed_private', true );
 
 		return $response;
