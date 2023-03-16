@@ -319,11 +319,16 @@ class Private_Media {
 		//end of UI
 		$role_boxes .= '</ul></div>';
 
-		$form_fields['pvtmed'] = [
-			'label' => __( 'Media Privacy', 'pvtmed' ),
-			'input' => 'html',
-			'html'  => $role_boxes
-		];
+		//call filter
+		$role_boxes = apply_filters( 'pvtmed_edit_settings', $role_boxes, $attachment, $form_fields );
+
+		if ($role_boxes) {
+			$form_fields['pvtmed'] = [
+				'label' => __( 'Media Privacy', 'pvtmed' ),
+				'input' => 'html',
+				'html'  => $role_boxes
+			];
+		}
 
 		//debug
 		//$this->debug($form_fields);
