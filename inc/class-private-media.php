@@ -45,7 +45,7 @@ class Private_Media {
 					add_filter( 'attachment_fields_to_save', [ $this, 'attachment_field_settings_save' ], 10, 2 );
 					add_filter( 'attachment_fields_to_edit', [ $this, 'attachment_field_settings' ], 10, 2 );
 
-					add_filter( 'wp_prepare_attachment_for_js', [ $this, 'attachment_js_data '], 10, 3 );
+					add_filter( 'wp_prepare_attachment_for_js', [ $this, 'attachment_js_data' ], 10, 3 );
 				}
 			}
 		}
