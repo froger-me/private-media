@@ -1,26 +1,27 @@
-/* global Pvtmed */
+/* global Pvtmed, wp */
+
 jQuery(document).ready(function ($) {
-    const label   = $('.compat-field-pvtmed th').html(),
-        content = $('.compat-field-pvtmed .field').html(),
-        row     = label + content;
+    const label   = $('.compat-field-pvtmed th').html();
+    const content = $('.compat-field-pvtmed .field').html();
+    const row     = label + content;
 
     $('.compat-field-pvtmed').html(row);
 
-    $(document).ajaxComplete( function (e, xhr, settings) {
+    $(document).ajaxComplete(function (e, xhr, settings) {
         const data = decodeURIComponent(settings.data);
 
         if (-1 !== data.indexOf('action=save-attachment-compat')) {
-            const input           = $('.attachment-info [data-setting="url"] input'),
-                containsPrivate = (-1 !== input.val().indexOf(Pvtmed.privateUrlBase)),
-                containsPublic  = (-1 !== input.val().indexOf(Pvtmed.publicUrlBase)),
-                toPublic        = ( -1 === data.indexOf('pvtmed') ),
-                toPrivate       = ( -1 !== data.indexOf('pvtmed') ),
-                hasChanged      = (containsPrivate && toPublic) || (containsPublic && toPrivate);
+            const input           = $('.attachment-info [data-setting="url"] input');
+            const containsPrivate = (-1 !== input.val().indexOf(Pvtmed.privateUrlBase));
+            const containsPublic  = (-1 !== input.val().indexOf(Pvtmed.publicUrlBase));
+            const toPublic        = ( -1 === data.indexOf('pvtmed') );
+            const toPrivate       = ( -1 !== data.indexOf('pvtmed') );
+            const hasChanged      = (containsPrivate && toPublic) || (containsPublic && toPrivate);
 
             if ( hasChanged ) {
-                const sourceBase      = (toPrivate) ? Pvtmed.publicUrlBase : Pvtmed.privateUrlBase,
-                    destinationBase = (toPrivate) ? Pvtmed.privateUrlBase : Pvtmed.publicUrlBase,
-                    src             = input.val().replace(sourceBase, destinationBase);
+                const sourceBase      = (toPrivate) ? Pvtmed.publicUrlBase : Pvtmed.privateUrlBase;
+                const destinationBase = (toPrivate) ? Pvtmed.privateUrlBase : Pvtmed.publicUrlBase;
+                const src             = input.val().replace(sourceBase, destinationBase);
 
                 input.val(src);
 
@@ -62,5 +63,13 @@ jQuery(document).ready(function ($) {
                 $(this).submit();
             }
         });
+    }
+
+    //modify grid template
+    //cbxx TODO
+    if (wp.media.view.Attachment) {
+        //debug cbxx
+        console.dir(wp.media.view.Attachment);
+        console.dir(wp.media.view.Attachment.prototype.template);
     }
 });
