@@ -1,6 +1,9 @@
 /* global Pvtmed, wp */
 
 jQuery(document).ready(function ($) {
+    //debug cbxx
+    console.dir(Pvtmed);
+
     const label   = $('.compat-field-pvtmed th').html();
     const content = $('.compat-field-pvtmed .field').html();
     const row     = label + content;
@@ -72,11 +75,57 @@ jQuery(document).ready(function ($) {
         //console.dir(wp.media.view.Attachment);
         //console.dir(wp.media.view.Attachment.prototype.template);
 
-        const template = $('#tmpl-attachment');
+        const templateNode = $('#tmpl-attachment');
+
+        if (!templateNode) {
+            return;
+        }
+
+        const template = templateNode.text();
+
+        //debug
+        //console.dir(templateNode);
+        //console.dir(templateNode.text());
+        //console.dir(templateNode.html());
+
+        //modify image part
+        let html = '';
+        let lastPos = 0;
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            //find img element
+            const startPos = template.indexOf('<img ', lastPos);
+
+            if (startPos === -1) {
+                break;
+            }
+
+            let endPos = template.indexOf(' />', startPos + 4);
+
+            if (endPos === -1) {
+                break;
+            }
+
+            endPos += 3;
+
+            html += template.substring(lastPos, startPos);
+            lastPos = endPos;
+
+            //modify
+            const imgHtml = template.substring(startPos, endPos);
+
+            html += '<div class="pvtmed-thumbnail">';
+            html += imgHtml;
+            html += '<span class="dashicons dashicons-lock"></span>';
+            html += '</div>';
+        }
+
+        html += template.substring(lastPos);
 
         //debug cbxx
-        console.dir(template);
-        console.dir(template.text());
-        console.dir(template.html());
+        console.dir(html);
+
+        //cbxx TODO
     }
 });
