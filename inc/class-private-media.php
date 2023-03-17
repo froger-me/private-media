@@ -29,6 +29,8 @@ class Private_Media {
 			add_filter( 'query_vars', [ $this, 'add_query_vars' ], -10, 1 );
 			add_action( 'parse_request', [ $this, 'parse_request' ], -10, 0 );
 
+			//cbxx TODO custom APIs
+
 			if ( ! self::is_doing_api_request() ) {
 				//general handling
 				add_action( 'init', [ $this, 'add_endpoints' ], -10, 0 );
@@ -38,14 +40,23 @@ class Private_Media {
 
 				add_action( 'wp_enqueue_scripts', [ $this, 'add_frontend_scripts' ], -10, 0 );
 
+				//admin only
 				if ( is_admin() ) {
 					add_action( 'wp_tiny_mce_init', [ $this, 'add_wp_tiny_mce_init_script' ], -10, 0 );
 
 					add_filter( 'admin_enqueue_scripts', [ $this, 'add_admin_scripts' ], -10, 1 );
+
+					//attachment settings
 					add_filter( 'attachment_fields_to_save', [ $this, 'attachment_field_settings_save' ], 10, 2 );
 					add_filter( 'attachment_fields_to_edit', [ $this, 'attachment_field_settings' ], 10, 2 );
 
+					//media grid view
 					add_filter( 'wp_prepare_attachment_for_js', [ $this, 'attachment_js_data' ], 10, 3 );
+
+					//media list view
+					//cbxx TODO
+					add_filter( 'manage_media_columns', [ $this, 'add_media_list_column' ], 10, 2 );
+					add_action( 'manage_media_custom_column', [ $this, 'render_media_list_column' ], 10, 2 );
 				}
 			}
 		}
@@ -352,14 +363,47 @@ class Private_Media {
 	 */
 	public function attachment_js_data( $response, $attachment, $meta ) {
 		//add private media flag
-		$response['privateMedia'] = get_post_meta( $attachment->ID, 'pvtmed_private', true ) === '1';
+		$response['privateMedia'] = $this->is_private_attachment( $attachment->ID );
 
-		//debug cbxx
-		//$response['allMeta'] = $meta;
-		$response['allMeta'] = get_post_meta( $attachment->ID );
-		//$response['privateMediaRaw'] = get_post_meta( $attachment->ID, 'pvtmed_private', true );
+		//debug
+		//$response['attachmentMeta'] = $meta;
+		//$response['allMeta'] = get_post_meta( $attachment->ID );
 
 		return $response;
+	}
+
+	/**
+	 * Add a column to the media list view.
+	 */
+	public function add_media_list_column( $posts_columns, $detached ) {
+		$posts_columns['pvtmed'] = __( 'Private Media', 'pvtmed' );
+
+		return $posts_columns;
+	}
+
+	/**
+	 * Render media list view column.
+	 */
+	public function render_media_list_column( string $column_name, int $post_id ) {
+		if ( $column_name === 'pvtmed' ) {
+			//display lock icon
+			echo '<span class="dashicons dashicons-lock"></span>';
+		}
+	}
+
+	//cbxx TODO move to attachment manager
+	/**
+	 * Check if an attachment is private (i.e. the file is stored at the private folder location).
+	 */
+	public function is_private_attachment( $attachment_id ) {
+		return get_post_meta( $attachment_id, 'pvtmed_private', true ) === '1';
+	}
+
+	/**
+	 * Get the raw permission array.
+	 */
+	public function get_attachment_permissions( $attachment_id ) {
+		return get_post_meta( $attachment_id, 'pvtmed_settings', true );
 	}
 
 	/**
