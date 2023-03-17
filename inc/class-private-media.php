@@ -29,7 +29,9 @@ class Private_Media {
 			add_filter( 'query_vars', [ $this, 'add_query_vars' ], -10, 1 );
 			add_action( 'parse_request', [ $this, 'parse_request' ], -10, 0 );
 
-			//cbxx TODO custom APIs
+			//public APIs
+			add_filter( 'pvtmed_is_attachment_private', [ $this, 'api_is_attachment_private' ], 10, 2);
+			add_filter( 'pvtmed_attachment_permissions', [ $this, 'api_attachment_permissions' ], 10, 2);
 
 			if ( ! self::is_doing_api_request() ) {
 				//general handling
@@ -527,6 +529,24 @@ class Private_Media {
 	protected function debug($msg, $params = []) {
 		//pass to Quer Monitor
 		do_action('qm/debug', $msg, $params);
+	}
+
+	/**
+	 * Check if an attachment is private.
+	 *
+	 * Note: if Private Media is not active, filter returns $value.
+	 */
+	public function api_is_attachment_private($value, $attachment_id) {
+		return Private_Media_Attachment_Manager::is_private_attachment($attachment_id);
+	}
+
+	/**
+	 * Get all permissions of an attachment.
+	 *
+	 * Note: if Private Media is not active, filter returns $value.
+	 */
+	public function api_attachment_permissions($value, $attachment_id) {
+		return Private_Media_Attachment_Manager::get_attachment_permissions($attachment_id);
 	}
 }
 
