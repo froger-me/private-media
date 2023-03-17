@@ -128,8 +128,8 @@ jQuery(document).ready(function ($) {
 
         html += template.substring(lastPos);
 
-        //debug cbxx
-        console.dir(html);
+        //debug
+        //console.dir(html);
 
         //store in DOM
         const script = document.createElement('script');

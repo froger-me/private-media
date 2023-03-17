@@ -113,6 +113,7 @@ class Private_Media_Attachment_Manager {
 		if ( ! empty( $attachment_ids ) ) {
 			//move files
 			foreach ( $attachment_ids as $key => $attachment_id ) {
+				//keep private flag
 				$this->move_media( $attachment_id, $operation, false );
 			}
 
