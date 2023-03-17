@@ -178,7 +178,7 @@ class Private_Media_Request_Handler {
 		//error_log(json_encode($wp->query_vars));
 		//error_log(urldecode($wp->query_vars['file']));
 
-		//Note: urldecode() needed to strip of %xy values appearing sometimes in Apache redirect URL
+		//Note: urldecode() needed to convert %xy values appearing sometimes in Apache redirect URL (e.g. %c2%ad which is as a single character in the database's string)
 		return urldecode($wp->query_vars['file']);
 	}
 
