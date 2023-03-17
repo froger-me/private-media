@@ -95,14 +95,21 @@ async function minifyJavaScriptFile(opts) {
  * Build minified JS files.
  */
 async function minifyJavaScript() {
-    // 1) main
+    // 1) admin main
+    await minifyJavaScriptFile({
+        src: DIR_ASSETS_JS + '/admin/main.js',
+        rename: 'main.min.js',
+        dest: DIR_ASSETS_JS + '/admin'
+    });
+
+    // 2) main
     await minifyJavaScriptFile({
         src: DIR_ASSETS_JS + '/main.js',
         rename: 'main.min.js',
         dest: DIR_ASSETS_JS
     });
 
-    // 2) TinyMCE
+    // 3) TinyMCE
     await minifyJavaScriptFile({
         src: DIR_ASSETS_JS + '/tinymce.js',
         rename: 'tinymce.min.js',
@@ -149,8 +156,6 @@ async function minifyAdminCSS() {
         dest: DIR_ASSETS_CSS + '/admin'
     });
 }
-
-//TODO build CSS
 
 /**
  * Main build task.
