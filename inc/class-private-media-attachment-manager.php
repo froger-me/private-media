@@ -11,6 +11,10 @@ class Private_Media_Attachment_Manager {
 	//data directory
 	protected static $root_data_dirname = 'pvtmed-uploads';
 
+	//post meta
+	const POST_META_PRIVATE  = 'pvtmed_private';
+	const POST_META_SETTINGS = 'pvtmed_settings';
+
 	protected static $fix_prefixes = [
 		'default' => [
 			'src'  => 'src="',
@@ -216,7 +220,7 @@ class Private_Media_Attachment_Manager {
 			'post_status' => 'inherit',
 			'meta_query'  => [
 				[
-					'key'   => 'pvtmed_private',
+					'key'   => Private_Media_Attachment_Manager::POST_META_PRIVATE,
 					'value' => true,
 					'type'  => 'BOOLEAN'
 				]
@@ -253,11 +257,7 @@ class Private_Media_Attachment_Manager {
 			$attachments = get_children( $args );
 
 			foreach ( $attachments as $attachment ) {
-				//get permissions
-				$permissions = get_post_meta( $attachment->ID, 'pvtmed_settings', true );
-
-				//check if private file
-				if ( is_array( $permissions ) && in_array( 1, array_values( $permissions ), true ) ) {
+				if ( Private_Media_Attachment_Manager::is_private_attachment( $attachment->ID ) ) {
 					//private file
 					$site_url           = get_option( 'siteurl' );
 					$private_upload_url = trailingslashit( $site_url ) . str_replace( ABSPATH, '', self::get_data_dir() );
@@ -279,9 +279,7 @@ class Private_Media_Attachment_Manager {
 	 */
 	public function delete_attachment( $attachment_id ) {
 		//check if private file
-		$permissions = get_post_meta( $attachment_id, 'pvtmed_settings', true );
-
-		if ( ! ( is_array( $permissions ) && in_array( 1, array_values( $permissions ), true ) ) ) {
+		if ( ! Private_Media_Attachment_Manager::is_private_attachment( $attachment_id ) ) {
 			//skip public
 			return;
 		}
@@ -349,9 +347,7 @@ class Private_Media_Attachment_Manager {
 	 */
 	public function get_attached_file( $path, $attachment_id ) {
 		//check if private file
-		$permissions = get_post_meta( $attachment_id, 'pvtmed_settings', true );
-
-		if ( is_array( $permissions ) && in_array( 1, array_values( $permissions ), true ) ) {
+		if ( Private_Media_Attachment_Manager::is_private_attachment( $attachment_id ) ) {
 			//private file
 			$upload_dir  = wp_upload_dir();
 			$public_dir  = trailingslashit( $upload_dir['basedir'] );
@@ -367,9 +363,7 @@ class Private_Media_Attachment_Manager {
 	 */
 	public function wp_get_attachment_url( $url, $attachment_id ) {
 		//check if private file
-		$permissions = get_post_meta( $attachment_id, 'pvtmed_settings', true );
-
-		if ( is_array( $permissions ) && in_array( 1, array_values( $permissions ), true ) ) {
+		if ( Private_Media_Attachment_Manager::is_private_attachment( $attachment_id ) ) {
 			//private file
 			$upload_dir         = wp_upload_dir();
 			$site_url           = get_option( 'siteurl' );
@@ -474,7 +468,7 @@ class Private_Media_Attachment_Manager {
 
 		if ( $update_meta ) {
 			//set the private post meta flag (Note: boolean is stored as '1'/'' for true/false)
-			update_post_meta( $attachment_id, 'pvtmed_private', ( 'private' === $operation ) );
+			update_post_meta( $attachment_id, Private_Media_Attachment_Manager::POST_META_PRIVATE, ( 'private' === $operation ) );
 		}
 	}
 
@@ -510,5 +504,19 @@ class Private_Media_Attachment_Manager {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Check if an attachment is private (i.e. the file is stored at the private folder location).
+	 */
+	public static function is_private_attachment( $attachment_id ) {
+		return get_post_meta( $attachment_id, Private_Media_Attachment_Manager::POST_META_PRIVATE, true ) === '1';
+	}
+
+	/**
+	 * Get the raw permission array.
+	 */
+	public static function get_attachment_permissions( $attachment_id ) {
+		return get_post_meta( $attachment_id, Private_Media_Attachment_Manager::POST_META_SETTINGS, true );
 	}
 }

@@ -103,7 +103,7 @@ class Private_Media_Request_Handler {
 
 		//check permissions
 		$authorized    = true;
-		$permissions = get_post_meta( $attachment_id, 'pvtmed_settings', true );
+		$permissions = Private_Media_Attachment_Manager::get_attachment_permissions( $attachment_id );
 
 		if ( ! empty( $permissions ) ) {
 			//has one or more permissions (i.e. is private file)

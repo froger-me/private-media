@@ -234,7 +234,7 @@ class Private_Media {
 		//get roles and attachment permissions
 		$attachment_id = $attachment['ID'];
 		$roles         = $wp_roles->get_names();
-		$permissions   = get_post_meta( $attachment_id, 'pvtmed_settings', true );
+		$permissions   = Private_Media_Attachment_Manager::get_attachment_permissions( $attachment_id );
 
 		if ( empty( $permissions ) ) {
 			$permissions = [];
@@ -288,7 +288,7 @@ class Private_Media {
 		}
 
 		//write permissions
-		update_post_meta( $attachment_id, 'pvtmed_settings', $permissions );
+		update_post_meta( $attachment_id, Private_Media_Attachment_Manager::POST_META_SETTINGS, $permissions );
 
 		return $attachment;
 	}
@@ -298,7 +298,7 @@ class Private_Media {
 	 */
 	public function attachment_field_settings( $form_fields, $attachment ) {
 		//get permissions
-		$permissions = get_post_meta( $attachment->ID, 'pvtmed_settings', true );
+		$permissions = Private_Media_Attachment_Manager( $attachment->ID );
 
 		global $wp_roles;
 
@@ -362,7 +362,7 @@ class Private_Media {
 	 */
 	public function attachment_js_data( $response, $attachment, $meta ) {
 		//add private media flag
-		$response['privateMedia'] = $this->is_private_attachment( $attachment->ID );
+		$response['privateMedia'] = Private_Media_Attachment_Manager::is_private_attachment( $attachment->ID );
 
 		//debug
 		//$response['attachmentMeta'] = $meta;
@@ -384,25 +384,15 @@ class Private_Media {
 	 * Render media list view column.
 	 */
 	public function render_media_list_column( string $column_name, int $post_id ) {
-		if ( $column_name === 'pvtmed' && $this->is_private_attachment( $post_id ) ) {
-			//display lock icon
-			echo '<span class="dashicons dashicons-lock"></span>';
+		if ( $column_name === 'pvtmed' ) {
+			if ( Private_Media_Attachment_Manager::is_private_attachment( $post_id ) ) {
+				//display lock icon
+				echo '<span class="dashicons dashicons-lock"></span>';
+			} else {
+				//display open icon
+				echo '<span class="dashicons dashicons-unlock"></span>';
+			}
 		}
-	}
-
-	//cbxx TODO move to attachment manager
-	/**
-	 * Check if an attachment is private (i.e. the file is stored at the private folder location).
-	 */
-	public function is_private_attachment( $attachment_id ) {
-		return get_post_meta( $attachment_id, 'pvtmed_private', true ) === '1';
-	}
-
-	/**
-	 * Get the raw permission array.
-	 */
-	public function get_attachment_permissions( $attachment_id ) {
-		return get_post_meta( $attachment_id, 'pvtmed_settings', true );
 	}
 
 	/**
