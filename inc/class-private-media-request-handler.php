@@ -171,13 +171,14 @@ class Private_Media_Request_Handler {
 	protected function get_file() {
 		global $wp;
 
-		//debug cbxx
-		error_log('Get file:');
-		error_log(json_encode($_SERVER));
-		error_log(json_encode($_GET)); //Note: empty
-		error_log(json_encode($wp->query_vars));
-		error_log(urldecode($wp->query_vars['file']));
+		//debug
+		//error_log('Get file:');
+		//error_log(json_encode($_SERVER));
+		//error_log(json_encode($_GET)); //Note: empty
+		//error_log(json_encode($wp->query_vars));
+		//error_log(urldecode($wp->query_vars['file']));
 
+		//Note: urldecode() needed to strip of %xy values appearing sometimes in Apache redirect URL
 		return urldecode($wp->query_vars['file']);
 	}
 
@@ -188,7 +189,6 @@ class Private_Media_Request_Handler {
 		global $wpdb;
 
 		//see https://developer.wordpress.org/reference/functions/attachment_url_to_postid/
-		//cbxx FIXME did not work in some cases ->
 		$file = preg_replace( '#\-[0-9]+x[0-9]+#', '', $file );
 		$query = $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value = %s;", $file );
 
