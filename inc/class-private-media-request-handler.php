@@ -178,7 +178,7 @@ class Private_Media_Request_Handler {
 		error_log(json_encode($wp->query_vars));
 		error_log(urldecode($wp->query_vars['file']));
 
-		return $wp->query_vars['file'];
+		return urldecode($wp->query_vars['file']);
 	}
 
 	/**
@@ -188,7 +188,8 @@ class Private_Media_Request_Handler {
 		global $wpdb;
 
 		//see https://developer.wordpress.org/reference/functions/attachment_url_to_postid/
-		//cbxx FIXME did not work in some cases -> preg_replace( '#\-[0-9]+x[0-9]+#', '', $file )
+		//cbxx FIXME did not work in some cases ->
+		$file = preg_replace( '#\-[0-9]+x[0-9]+#', '', $file );
 		$query = $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value = %s;", $file );
 
 		$attachment_id = $wpdb->get_var( $query ); // @codingStandardsIgnoreLine
