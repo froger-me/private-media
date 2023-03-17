@@ -300,7 +300,7 @@ class Private_Media {
 	 */
 	public function attachment_field_settings( $form_fields, $attachment ) {
 		//get permissions
-		$permissions = Private_Media_Attachment_Manager( $attachment->ID );
+		$permissions = Private_Media_Attachment_Manager::get_attachment_permissions( $attachment->ID );
 
 		global $wp_roles;
 
