@@ -54,7 +54,6 @@ class Private_Media {
 					add_filter( 'wp_prepare_attachment_for_js', [ $this, 'attachment_js_data' ], 10, 3 );
 
 					//media list view
-					//cbxx TODO
 					add_filter( 'manage_media_columns', [ $this, 'add_media_list_column' ], 10, 2 );
 					add_action( 'manage_media_custom_column', [ $this, 'render_media_list_column' ], 10, 2 );
 				}
@@ -385,7 +384,7 @@ class Private_Media {
 	 * Render media list view column.
 	 */
 	public function render_media_list_column( string $column_name, int $post_id ) {
-		if ( $column_name === 'pvtmed' ) {
+		if ( $column_name === 'pvtmed' && $this->is_private_attachment( $post_id ) ) {
 			//display lock icon
 			echo '<span class="dashicons dashicons-lock"></span>';
 		}
