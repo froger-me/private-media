@@ -407,21 +407,14 @@ class Private_Media {
 		}
 
 		$debug = (bool) ( constant( 'WP_DEBUG' ) );
-
-		$upload_dir         = wp_upload_dir();
-		$site_url           = get_option( 'siteurl' );
-		$public_upload_url  = trailingslashit( $upload_dir['baseurl'] );
-		$private_upload_url = trailingslashit( $site_url ) . str_replace( ABSPATH, '', Private_Media_Attachment_Manager::get_data_dir() );
-		$private_upload_url = apply_filters( 'pvtmed_private_upload_url', $private_upload_url );
-
 		$js_ext  = ( $debug ) ? '.js' : '.min.js';
 		$version = filemtime( PVTMED_PLUGIN_PATH . 'assets/js/main' . $js_ext );
 
 		$script_params = [
 			'ajax_url'          => admin_url( 'admin-ajax.php' ),
 			'debug'             => $debug,
-			'publicUrlBase'     => $public_upload_url,
-			'privateUrlBase'    => $private_upload_url,
+			'publicUrlBase'     => Private_Media_Attachment_Manager::get_public_upload_url(),
+			'privateUrlBase'    => Private_Media_Attachment_Manager::get_private_upload_url(),
 			'isAdmin'           => is_admin(),
 			'brokenMessage'     => __( "Private Media Warning - a media in the post content has a broken source. An attempt to quickfix it dynamically will be performed, but it is recommended to delete it and insert it again.\nMedia URL:\n", 'pvtmed' ),
 			'scriptUrls'        => [
@@ -440,13 +433,6 @@ class Private_Media {
 	 */
 	public function add_wp_tiny_mce_init_script() {
 		$debug = (bool) ( constant( 'WP_DEBUG' ) );
-
-		$upload_dir         = wp_upload_dir();
-		$site_url           = get_option( 'siteurl' );
-		$public_upload_url  = trailingslashit( $upload_dir['baseurl'] );
-		$private_upload_url = trailingslashit( $site_url ) . str_replace( ABSPATH, '', Private_Media_Attachment_Manager::get_data_dir() );
-		$private_upload_url = apply_filters( 'pvtmed_private_upload_url', $private_upload_url );
-
 		$js_ext  = ( $debug ) ? '.js' : '.min.js';
 		$version = filemtime( PVTMED_PLUGIN_PATH . 'assets/js/tinymce' . $js_ext );
 

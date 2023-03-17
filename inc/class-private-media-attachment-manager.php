@@ -138,11 +138,8 @@ class Private_Media_Attachment_Manager {
 	protected function replace_private_markup_in_posts() {
 		global $wpdb;
 
-		$upload_dir         = wp_upload_dir();
-		$site_url           = get_option( 'siteurl' );
-		$public_upload_url  = trailingslashit( $upload_dir['baseurl'] );
-		$private_upload_url = trailingslashit( $site_url ) . str_replace( ABSPATH, '', self::get_data_dir() );
-		$private_upload_url = apply_filters( 'pvtmed_private_upload_url', $private_upload_url );
+		$public_upload_url  = self::get_public_upload_url();
+		$private_upload_url = self::get_private_upload_url();
 
 		foreach ( self::$fix_prefixes as $type => $types ) {
 			//skip URL updates
@@ -182,11 +179,8 @@ class Private_Media_Attachment_Manager {
 	protected function replace_public_markup_in_posts() {
 		global $wpdb;
 
-		$upload_dir         = wp_upload_dir();
-		$site_url           = get_option( 'siteurl' );
-		$public_upload_url  = trailingslashit( $upload_dir['baseurl'] );
-		$private_upload_url = trailingslashit( $site_url ) . str_replace( ABSPATH, '', self::get_data_dir() );
-		$private_upload_url = apply_filters( 'pvtmed_private_upload_url', $private_upload_url );
+		$public_upload_url  = self::get_public_upload_url();
+		$private_upload_url = self::get_private_upload_url();
 
 		//iterate list of prefixes
 		foreach ( self::$fix_prefixes as $type => $types ) {
@@ -220,7 +214,7 @@ class Private_Media_Attachment_Manager {
 			'post_status' => 'inherit',
 			'meta_query'  => [
 				[
-					'key'   => Private_Media_Attachment_Manager::POST_META_PRIVATE,
+					'key'   => self::POST_META_PRIVATE,
 					'value' => true,
 					'type'  => 'BOOLEAN'
 				]
@@ -257,11 +251,9 @@ class Private_Media_Attachment_Manager {
 			$attachments = get_children( $args );
 
 			foreach ( $attachments as $attachment ) {
-				if ( Private_Media_Attachment_Manager::is_private_attachment( $attachment->ID ) ) {
+				if ( self::is_private_attachment( $attachment->ID ) ) {
 					//private file
-					$site_url           = get_option( 'siteurl' );
-					$private_upload_url = trailingslashit( $site_url ) . str_replace( ABSPATH, '', self::get_data_dir() );
-					$private_upload_url = apply_filters( 'pvtmed_private_upload_url', $private_upload_url );
+					$private_upload_url = self::get_private_upload_url();
 
 					//do not allow private files in enclosures
 					if ( false !== strpos( $meta_value, $private_upload_url ) ) {
@@ -279,7 +271,7 @@ class Private_Media_Attachment_Manager {
 	 */
 	public function delete_attachment( $attachment_id ) {
 		//check if private file
-		if ( ! Private_Media_Attachment_Manager::is_private_attachment( $attachment_id ) ) {
+		if ( ! self::is_private_attachment( $attachment_id ) ) {
 			//skip public
 			return;
 		}
@@ -347,10 +339,9 @@ class Private_Media_Attachment_Manager {
 	 */
 	public function get_attached_file( $path, $attachment_id ) {
 		//check if private file
-		if ( Private_Media_Attachment_Manager::is_private_attachment( $attachment_id ) ) {
+		if ( self::is_private_attachment( $attachment_id ) ) {
 			//private file
-			$upload_dir  = wp_upload_dir();
-			$public_dir  = trailingslashit( $upload_dir['basedir'] );
+			$public_dir  = self::get_public_upload_directory();
 			$private_dir = self::get_data_dir();
 			$path        = str_replace( $public_dir, $private_dir, $path );
 		}
@@ -363,13 +354,10 @@ class Private_Media_Attachment_Manager {
 	 */
 	public function wp_get_attachment_url( $url, $attachment_id ) {
 		//check if private file
-		if ( Private_Media_Attachment_Manager::is_private_attachment( $attachment_id ) ) {
+		if ( self::is_private_attachment( $attachment_id ) ) {
 			//private file
-			$upload_dir         = wp_upload_dir();
-			$site_url           = get_option( 'siteurl' );
-			$public_upload_url  = trailingslashit( $upload_dir['baseurl'] );
-			$private_upload_url = trailingslashit( $site_url ) . str_replace( ABSPATH, '', self::get_data_dir() );
-			$private_upload_url = apply_filters( 'pvtmed_private_upload_url', $private_upload_url );
+			$public_upload_url  = self::get_public_upload_url();
+			$private_upload_url = self::get_private_upload_url();
 			$url                = str_replace( $public_upload_url, $private_upload_url, $url );
 		}
 
@@ -390,14 +378,11 @@ class Private_Media_Attachment_Manager {
 	 */
 	public function wp_calculate_image_srcset( $sources, $size_array, $image_src, $image_meta, $attachment_id ) {
 		//check if private URL is being used
-		$site_url           = get_option( 'siteurl' );
-		$private_upload_url = trailingslashit( $site_url ) . str_replace( ABSPATH, '', self::get_data_dir() );
-		$private_upload_url = apply_filters( 'pvtmed_private_upload_url', $private_upload_url );
+		$private_upload_url = self::get_private_upload_url();
 
 		if ( false !== strpos( $image_src, $private_upload_url ) ) {
 			//private file
-			$upload_dir        = wp_upload_dir();
-			$public_upload_url = trailingslashit( $upload_dir['baseurl'] );
+			$public_upload_url = self::get_public_upload_url();
 
 			//convert all source files URLs
 			foreach ( $sources as $key => $url ) {
@@ -414,9 +399,8 @@ class Private_Media_Attachment_Manager {
 	public function move_media( $attachment_id, $operation, $update_meta = true ) {
 		global $wp_filesystem;
 
-		$upload_dir     = wp_upload_dir();
+		$public_dir     = self::get_public_upload_directory();
 		$private_dir    = self::get_data_dir();
-		$public_dir     = trailingslashit( $upload_dir['basedir'] );
 		$file_path      = get_attached_file( $attachment_id, true );
 		$path_fragments = explode( '/', $file_path );
 
@@ -468,7 +452,7 @@ class Private_Media_Attachment_Manager {
 
 		if ( $update_meta ) {
 			//set the private post meta flag (Note: boolean is stored as '1'/'' for true/false)
-			update_post_meta( $attachment_id, Private_Media_Attachment_Manager::POST_META_PRIVATE, ( 'private' === $operation ) );
+			update_post_meta( $attachment_id, self::POST_META_PRIVATE, ( 'private' === $operation ) );
 		}
 	}
 
@@ -510,13 +494,46 @@ class Private_Media_Attachment_Manager {
 	 * Check if an attachment is private (i.e. the file is stored at the private folder location).
 	 */
 	public static function is_private_attachment( $attachment_id ) {
-		return get_post_meta( $attachment_id, Private_Media_Attachment_Manager::POST_META_PRIVATE, true ) === '1';
+		return get_post_meta( $attachment_id, self::POST_META_PRIVATE, true ) === '1';
 	}
 
 	/**
 	 * Get the raw permission array.
 	 */
 	public static function get_attachment_permissions( $attachment_id ) {
-		return get_post_meta( $attachment_id, Private_Media_Attachment_Manager::POST_META_SETTINGS, true );
+		return get_post_meta( $attachment_id, self::POST_META_SETTINGS, true );
+	}
+
+	/**
+	 * Get the public upload directory URL.
+	 */
+	public static function get_public_upload_url() {
+		$upload_dir        = wp_upload_dir();
+		$public_upload_url = trailingslashit( $upload_dir['baseurl'] );
+
+		return $public_upload_url;
+	}
+
+	/**
+	 * Get the public upload directory.
+	 */
+	public static function get_public_upload_directory() {
+		$upload_dir = wp_upload_dir();
+		$public_dir = trailingslashit( $upload_dir['basedir'] );
+
+		return $public_dir;
+	}
+
+	/**
+	 * Get the private upload directory URL (data directory URL).
+	 */
+	public static function get_private_upload_url() {
+		$site_url           = get_option( 'siteurl' );
+		$private_upload_url = trailingslashit( $site_url ) . str_replace( ABSPATH, '', self::get_data_dir() );
+
+		//apply filter
+		$private_upload_url = apply_filters( 'pvtmed_private_upload_url', $private_upload_url );
+
+		return $private_upload_url;
 	}
 }
