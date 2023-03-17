@@ -173,8 +173,10 @@ class Private_Media_Request_Handler {
 
 		//debug cbxx
 		error_log('Get file:');
-		error_log(json_encode($_GET));
+		error_log(json_encode($_SERVER));
+		error_log(json_encode($_GET)); //Note: empty
 		error_log(json_encode($wp->query_vars));
+		error_log(urldecode($wp->query_vars['file']));
 
 		return $wp->query_vars['file'];
 	}
