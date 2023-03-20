@@ -455,14 +455,16 @@ class Private_Media_Attachment_Manager {
 
 	/**
 	 * Set the attachment state.
+	 *
+	 * Note: $attachment is array, not a WP_Post instance!
 	 */
 	public function set_attachment_permissions( $attachment, $permissions = null ) {
 		//accept integer parameters
 		if (is_integer( $attachment )) {
 			$attachment_id = $attachment;
-			$attachment = get_post( $attachment_id );
+			$attachment = get_post( $attachment_id, ARRAY_A ); //backwards compatible (using array)
 		} else {
-			$attachment_id = $attachment->ID;
+			$attachment_id = $attachment['ID'];
 		}
 
 		//check private

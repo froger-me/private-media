@@ -230,12 +230,16 @@ class Private_Media {
 
 	/**
 	 * Filter attachments fields to be saved.
+	 *
+	 * Note: $attachment is $post array (not WP_Post instance)
+	 *
+	 * See https://github.com/WordPress/WordPress/blob/master/wp-admin/includes/ajax-actions.php#L3186
 	 */
-	public function attachment_field_settings_save( $attachment, $fields ) {
+	public function attachment_field_settings_save( array $attachment, array $fields ) {
 		global $wp_roles;
 
 		//get roles and attachment permissions
-		$attachment_id = $attachment->ID;
+		$attachment_id = $attachment['ID'];
 		$roles         = $wp_roles->get_names();
 		$permissions   = Private_Media_Attachment_Manager::get_attachment_permissions( $attachment_id );
 
@@ -278,9 +282,10 @@ class Private_Media {
 	/**
 	 * Display attachments settings.
 	 */
-	public function attachment_field_settings( $form_fields, $attachment ) {
+	public function attachment_field_settings( array $form_fields, WP_Post $attachment ) {
 		//get permissions
-		$permissions = Private_Media_Attachment_Manager::get_attachment_permissions( $attachment->ID );
+		$attachment_id = $attachment->ID;
+		$permissions = Private_Media_Attachment_Manager::get_attachment_permissions( $attachment_id );
 
 		global $wp_roles;
 
@@ -296,7 +301,7 @@ class Private_Media {
 		//always private checkbox (define access rules later or by custom filter)
 		$always_private = ( isset( $permissions['always_private'] ) && 1 === $permissions['always_private'] ) ? 'checked' : '';
 
-		$role_boxes .= '<li><span>' . __( 'Private file (always kept private)', 'pvtmed' ) . '</span><input type="checkbox" name="attachments[' . $attachment->ID . '][pvtmed_always_private]" id="attachments[pvtmed_always_private]" value="1" ' . $always_private . '/></li>';
+		$role_boxes .= '<li><span>' . __( 'Private file (always kept private)', 'pvtmed' ) . '</span><input type="checkbox" name="attachments[' . $attachment_id . '][pvtmed_always_private]" id="attachments[pvtmed_always_private]" value="1" ' . $always_private . '/></li>';
 		$role_boxes .= '<li> <hr/> </li>';
 
 		//hotlinking checkbox
@@ -305,7 +310,7 @@ class Private_Media {
 		if ($hotlinkFeature) {
 			$no_hotlinks = ( isset( $permissions['disable_hotlinks'] ) && 1 === $permissions['disable_hotlinks'] ) ? 'checked' : '';
 
-			$role_boxes .= '<li><span>' . __( 'Prevent hotlinks (even when not limited by role)', 'pvtmed' ) . '</span><input type="checkbox" name="attachments[' . $attachment->ID . '][pvtmed_disable_hotlinks]" id="attachments[pvtmed_disable_hotlinks]" value="1" ' . $no_hotlinks . '/></li>';
+			$role_boxes .= '<li><span>' . __( 'Prevent hotlinks (even when not limited by role)', 'pvtmed' ) . '</span><input type="checkbox" name="attachments[' . $attachment_id . '][pvtmed_disable_hotlinks]" id="attachments[pvtmed_disable_hotlinks]" value="1" ' . $no_hotlinks . '/></li>';
 			$role_boxes .= '<li> <hr/> </li>';
 		}
 
@@ -316,7 +321,7 @@ class Private_Media {
 			$role_checked = ( isset( $permissions[ $key ] ) && 1 === $permissions[ $key ] ) ? 'checked' : '';
 
 			// translators: %s is the role name
-			$role_boxes .= '<li><span>' . sprintf( __( 'Limit to %s role' ), $role_name ) . '</span><input type="checkbox" name="attachments[' . $attachment->ID . '][pvtmed_' . $key . ']" id="attachments[pvtmed_' . $key . ']" value="' . $key . '" ' . $role_checked . '/></li>';
+			$role_boxes .= '<li><span>' . sprintf( __( 'Limit to %s role' ), $role_name ) . '</span><input type="checkbox" name="attachments[' . $attachment_id . '][pvtmed_' . $key . ']" id="attachments[pvtmed_' . $key . ']" value="' . $key . '" ' . $role_checked . '/></li>';
 		}
 
 		//end of UI
@@ -342,7 +347,7 @@ class Private_Media {
 	/**
 	 * Add data for JavaScript rendering.
 	 */
-	public function attachment_js_data( $response, $attachment, $meta ) {
+	public function attachment_js_data( array $response, WP_Post $attachment, $meta ) {
 		//add private media flag
 		$response['privateMedia'] = Private_Media_Attachment_Manager::is_private_attachment( $attachment->ID );
 
