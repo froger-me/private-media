@@ -294,7 +294,6 @@ class Private_Media_Attachment_Manager {
 		}
 
 		if ( isset( $meta['sizes'] ) && is_array( $meta['sizes'] ) ) {
-
 			foreach ( $meta['sizes'] as $size => $sizeinfo ) {
 				$intermediate_file = str_replace( basename( $file ), $sizeinfo['file'], $file );
 				$intermediate_file = apply_filters( 'wp_delete_file', $intermediate_file );
@@ -304,7 +303,6 @@ class Private_Media_Attachment_Manager {
 		}
 
 		if ( is_array( $backup_sizes ) ) {
-
 			foreach ( $backup_sizes as $size ) {
 				$del_file = path_join( dirname( $meta['file'] ), $size['file'] );
 				$del_file = apply_filters( 'wp_delete_file', $del_file );
@@ -396,7 +394,7 @@ class Private_Media_Attachment_Manager {
 	/**
 	 * Move a file from public to private folder or vice versa.
 	 */
-	public function move_media( $attachment_id, $operation, $update_meta = true ) {
+	protected function move_media( $attachment_id, $operation, $update_meta = true ) {
 		global $wp_filesystem;
 
 		$public_dir     = self::get_public_upload_directory();
@@ -428,7 +426,6 @@ class Private_Media_Attachment_Manager {
 			$partial_path   = $destination_basedir;
 
 			foreach ( $path_fragments as $fragment ) {
-
 				if ( ! $wp_filesystem->is_dir( $partial_path . $fragment ) ) {
 					$wp_filesystem->mkdir( $partial_path . $fragment );
 				}
@@ -454,6 +451,58 @@ class Private_Media_Attachment_Manager {
 			//set the private post meta flag (Note: boolean is stored as '1'/'' for true/false)
 			update_post_meta( $attachment_id, self::POST_META_PRIVATE, ( 'private' === $operation ) );
 		}
+	}
+
+	/**
+	 * Set the attachment state.
+	 */
+	public function set_attachment_permissions( $attachment, $permissions = null ) {
+		//accept integer parameters
+		if (is_integer( $attachment )) {
+			$attachment_id = $attachment;
+			$attachment = get_post( $attachment_id );
+		} else {
+			$attachment_id = $attachment->ID;
+		}
+
+		//check private
+		$private = ! empty( $permissions ) && in_array( 1, array_values( $permissions ), true );
+
+		//check if move required (state changed)
+		$location_changed = self::is_private_attachment( $attachment_id ) !== $private;
+
+		if ($location_changed) {
+			//move needed
+			if ( $private ) {
+				//private file
+				$mime_type = $attachment['post_mime_type'];
+
+				//skip URL updates for video/audio HTML in activation/deactivation of plugin
+				if ( 0 === strpos( $mime_type, 'video' ) ) {
+					update_option( 'pvtmed_deactivate_migrate_video', true, false );
+				}
+
+				if ( 0 === strpos( $mime_type, 'audio' ) ) {
+					update_option( 'pvtmed_deactivate_migrate_audio', true, false );
+				}
+
+				//move the files (sets private flag)
+				$this->move_media( $attachment_id, 'private' );
+			} else {
+				//public file (resets private flag)
+				$this->move_media( $attachment_id, 'public' );
+			}
+		}
+
+		//update permissions
+		if ( $private ) {
+			update_post_meta( $attachment_id, self::POST_META_SETTINGS, $permissions );
+		} else {
+			//remove
+			delete_post_meta( $attachment_id, self::POST_META_SETTINGS );
+		}
+
+		return true;
 	}
 
 	/**

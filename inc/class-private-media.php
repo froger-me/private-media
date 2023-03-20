@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Private_Media {
 	protected $request_handler;
-	protected $attachment_manager;
+	protected Private_Media_Attachment_Manager $attachment_manager;
 
 	protected static $doing_private_media_api_request;
 
@@ -31,7 +31,8 @@ class Private_Media {
 
 			//public APIs
 			add_filter( 'pvtmed_is_attachment_private', [ $this, 'api_is_attachment_private' ], 10, 2);
-			add_filter( 'pvtmed_attachment_permissions', [ $this, 'api_attachment_permissions' ], 10, 2);
+			add_filter( 'pvtmed_get_attachment_permissions', [ $this, 'api_attachment_permissions' ], 10, 2);
+			add_action( 'pvtmed_set_attachment_permissions', [ $this, 'api_set_permissions' ], 10, 2 );
 
 			if ( ! self::is_doing_api_request() ) {
 				//general handling
@@ -234,7 +235,7 @@ class Private_Media {
 		global $wp_roles;
 
 		//get roles and attachment permissions
-		$attachment_id = $attachment['ID'];
+		$attachment_id = $attachment->ID;
 		$roles         = $wp_roles->get_names();
 		$permissions   = Private_Media_Attachment_Manager::get_attachment_permissions( $attachment_id );
 
@@ -268,29 +269,8 @@ class Private_Media {
 			unset( $permissions['disable_hotlinks'] );
 		}
 
-		//check one value is active (private file)
-		if ( in_array( 1, array_values( $permissions ), true ) ) {
-			//private file
-			$mime_type = $attachment['post_mime_type'];
-
-			//skip URL updates for video/audio HTML in activation/deactivation of plugin
-			if ( 0 === strpos( $mime_type, 'video' ) ) {
-				update_option( 'pvtmed_deactivate_migrate_video', true, false );
-			}
-
-			if ( 0 === strpos( $mime_type, 'audio' ) ) {
-				update_option( 'pvtmed_deactivate_migrate_audio', true, false );
-			}
-
-			//move the files
-			$this->attachment_manager->move_media( $attachment_id, 'private' );
-		} else {
-			//public file
-			$this->attachment_manager->move_media( $attachment_id, 'public' );
-		}
-
-		//write permissions
-		update_post_meta( $attachment_id, Private_Media_Attachment_Manager::POST_META_SETTINGS, $permissions );
+		//apply
+		$this->attachment_manager->set_attachment_permissions( $attachment, $permissions );
 
 		return $attachment;
 	}
@@ -547,6 +527,13 @@ class Private_Media {
 	 */
 	public function api_attachment_permissions($value, $attachment_id) {
 		return Private_Media_Attachment_Manager::get_attachment_permissions($attachment_id);
+	}
+
+	/**
+	 * Set an attachment private or public.
+	 */
+	public function api_set_permissions($attachment_id, $permissions = null) {
+		$this->attachment_manager->set_attachment_permissions( $attachment_id, $permissions );
 	}
 }
 
