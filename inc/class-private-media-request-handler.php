@@ -29,7 +29,17 @@ class Private_Media_Request_Handler {
 			$file = Private_Media_Attachment_Manager::get_data_dir() . str_replace( '..', '', $this->get_file() );
 
 			if ( ! $wp_filesystem->is_file( $file ) ) {
+				//file not found
 				$this->send_response( '404' );
+			} else if ( $authorized === 404 ) {
+				//file exists but attachment not found (most likely a bug in our code)
+
+				//log
+				error_log('-> file exists: ' . $file);
+
+				//block (private but permissions unknown)
+				header( 'PvtMed-Error: Unknown Attachment' );
+				$this->send_forbidden();
 			}
 
 			// 2) get content type
@@ -75,14 +85,20 @@ class Private_Media_Request_Handler {
 			$this->send_response( '200 OK', $file );
 		} else {
 			//forbidden (403)
-
-			//return forbidden image
-			$mimetype = apply_filters( 'pvtmed_forbidden_mimetype', 'image/svg+xml' );
-
-			header( 'Content-Type: ' . $mimetype );
-
-			$this->send_response( '403' );
+			$this->send_forbidden();
 		}
+	}
+
+	/**
+	 * Send forbidden image.
+	 */
+	protected function send_forbidden() {
+		//return forbidden image
+		$mimetype = apply_filters( 'pvtmed_forbidden_mimetype', 'image/svg+xml' );
+
+		header( 'Content-Type: ' . $mimetype );
+
+		$this->send_response( '403' );
 	}
 
 	/**
@@ -94,11 +110,8 @@ class Private_Media_Request_Handler {
 		$attachment_id = $this->file_url_to_attachment_id( $file );
 
 		if (!$attachment_id) {
-			//log error
-			error_log('Unknown attachment: ' . $file);
-
-			//Note: handled as 404
-			return true;
+			//unknown attachment file
+			return 404;
 		}
 
 		//check permissions
@@ -189,10 +202,23 @@ class Private_Media_Request_Handler {
 		global $wpdb;
 
 		//see https://developer.wordpress.org/reference/functions/attachment_url_to_postid/
-		$file = preg_replace( '#\-[0-9]+x[0-9]+#', '', $file );
-		$query = $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value = %s;", $file );
+
+		//remove resized image (e.g. -212x300)
+		$file2 = preg_replace( '#\-[0-9]+x[0-9]+#', '', $file );
+
+		//PDF preview images
+		//cbxx TODO verify
+		$file2 = str_replace( '-pdf.jpg', '.pdf', $file2 );
+
+		$query = $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value = %s;", $file2 );
 
 		$attachment_id = $wpdb->get_var( $query ); // @codingStandardsIgnoreLine
+
+		//log cbxx
+		if (!$attachment_id) {
+			error_log('Unknown pvtmed attachment: ' . $file);
+			error_log($file2);
+		}
 
 		return (int) $attachment_id;
 	}

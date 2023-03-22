@@ -541,5 +541,3 @@ class Private_Media {
 		$this->attachment_manager->set_attachment_permissions( $attachment_id, $permissions );
 	}
 }
-
-
