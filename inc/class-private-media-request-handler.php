@@ -212,6 +212,7 @@ class Private_Media_Request_Handler {
 		//find attachment
 		$query = $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value = %s;", $file2 );
 
+		//get first result
 		$attachment_id = $wpdb->get_var( $query ); // @codingStandardsIgnoreLine
 
 		//log
