@@ -207,14 +207,14 @@ class Private_Media_Request_Handler {
 		$file2 = preg_replace( '#\-[0-9]+x[0-9]+#', '', $file );
 
 		//PDF preview images
-		//cbxx TODO verify
 		$file2 = str_replace( '-pdf.jpg', '.pdf', $file2 );
 
+		//find attachment
 		$query = $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value = %s;", $file2 );
 
 		$attachment_id = $wpdb->get_var( $query ); // @codingStandardsIgnoreLine
 
-		//log cbxx
+		//log
 		if (!$attachment_id) {
 			error_log('Unknown pvtmed attachment: ' . $file);
 			error_log($file2);
