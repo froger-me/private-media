@@ -315,7 +315,7 @@ class Private_Media {
 		}
 
 		//role checkboxes
-		$roles = apply_filter( 'pvtmed_edit_roles', $wp_roles->get_names(), $permissions );
+		$roles = apply_filters( 'pvtmed_edit_roles', $wp_roles->get_names(), $permissions );
 
 		foreach ( $roles as $key => $role_name ) {
 			$role_checked = ( isset( $permissions[ $key ] ) && 1 === $permissions[ $key ] ) ? 'checked' : '';
