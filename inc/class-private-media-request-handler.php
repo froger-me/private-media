@@ -175,7 +175,7 @@ class Private_Media_Request_Handler {
 		}
 
 		//call filter
-		return apply_filters( 'pvtmed_is_authorized', $authorized, $attachment_id );
+		return apply_filters( 'pvtmed_is_authorized', $authorized, $attachment_id, $permissions );
 	}
 
 	/**
