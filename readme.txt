@@ -39,6 +39,9 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+= 1.5 =
+* Fix: added readme.txt back again
+
 = 1.4 =
 * Added pvtmed_load_frontend filter: opt-out of loading main.js on all pages.
 * Added pvtmed_hotlink_feature filter: opt-out of hotlinking feature.
