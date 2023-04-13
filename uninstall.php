@@ -10,11 +10,13 @@ WP_Filesystem();
 
 global $wp_filesystem;
 
+// 1) remove the endpoint plugin
 $mu_plugin = trailingslashit( wp_normalize_path( WPMU_PLUGIN_DIR ) ) . 'pvtmed-endpoint-optimizer.php';
 
 $wp_filesystem->delete( $mu_plugin );
 $wp_filesystem->delete( $mu_plugin . '.backup' );
 
+// 2) remove transients and global options
 $transient_prefix = $wpdb->esc_like( '_transient_pvtmed_' ) . '%';
 $option_prefix    = $wpdb->esc_like( 'pvtmed' ) . '%';
 
@@ -26,6 +28,7 @@ $wpdb->query(
 	)
 );
 
+// 3) remove post meta values
 $wpdb->query(
 	$wpdb->prepare(
 		"DELETE FROM {$wpdb->postmeta} WHERE `meta_key` LIKE %s",
@@ -33,6 +36,7 @@ $wpdb->query(
 	)
 );
 
+// 4) remove pvtmed-enabled style
 $private_frag = 'pvtmed-';
 
 $wpdb->query(
@@ -43,8 +47,7 @@ $wpdb->query(
 	)
 );
 
-global $wp_filesystem;
-
+// 5) move files to uploads folder and delete private folder
 $upload_dir = wp_upload_dir();
 $public_dir = trailingslashit( $upload_dir['basedir'] );
 $data_dir   = trailingslashit( $wp_filesystem->wp_content_dir() . 'pvtmed-uploads' );
@@ -56,11 +59,13 @@ foreach ( $info as $name => $i ) {
 
 $wp_filesystem->delete( $data_dir, true );
 
+/**
+ * Moves files.
+ */
 function pvtmed_uninstall_move_files( $info, $path ) {
 	global $wp_filesystem;
 
 	if ( 'd' === $info['type'] && isset( $info['files'] ) ) {
-
 		if ( ! $wp_filesystem->is_dir( $path ) ) {
 			$wp_filesystem->mkdir( $path );
 		}
@@ -76,6 +81,7 @@ function pvtmed_uninstall_move_files( $info, $path ) {
 			trailingslashit( $wp_filesystem->wp_content_dir() . 'pvtmed-uploads' ),
 			$destination
 		);
+
 		$wp_filesystem->move( $source, $destination, true );
 	}
 }

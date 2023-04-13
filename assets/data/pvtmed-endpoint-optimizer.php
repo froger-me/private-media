@@ -17,19 +17,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 global $pvtmed_doing_private_media_api_request, $pvtmed_always_active_plugins;
 
 if ( ! $pvtmed_always_active_plugins ) {
-	$pvtmed_always_active_plugins = array(
+	$pvtmed_always_active_plugins = [
 		// Edit with your plugin IDs here to keep them active during media access.
 		// 'my-plugin-slug/my-plugin-file.php',
 		// 'my-other-plugin-slug/my-other-plugin-file.php',
-		'private-media/private-media.php',
-	);
+		'private-media/private-media.php'
+	];
 }
 
 $pvtmed_doing_private_media_api_request = ( false !== strpos( $_SERVER['REQUEST_URI'], 'pvtmed-uploads' ) );
 
 if ( true === $pvtmed_doing_private_media_api_request ) {
-
-	$hooks = array(
+	//remove filter hooks
+	$hooks = [
 		'registered_taxonomy',
 		'wp_register_sidebar_widget',
 		'registered_post_type',
@@ -56,7 +56,7 @@ if ( true === $pvtmed_doing_private_media_api_request ) {
 		'request',
 		'parse_request',
 		'shutdown',
-	);
+	];
 
 	foreach ( $hooks as $hook ) {
 		remove_all_filters( $hook );
@@ -72,7 +72,6 @@ function pvtmed_unset_plugins( $plugins ) {
 	global $pvtmed_always_active_plugins;
 
 	foreach ( $plugins as $key => $plugin ) {
-
 		if ( ! in_array( $plugin, $pvtmed_always_active_plugins, true ) ) {
 			unset( $plugins[ $key ] );
 		}
@@ -82,11 +81,9 @@ function pvtmed_unset_plugins( $plugins ) {
 }
 
 function pvtmed_bypass_cache( $is_cache ) {
-
 	return false;
 }
 
 function pvtmed_bypass_themes_functions( $template_dir, $template, $theme_root ) {
-
 	return dirname( __FILE__ );
 }

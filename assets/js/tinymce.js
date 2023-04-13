@@ -8,12 +8,9 @@
 
     function patchEditor(editor) {
         editor.on('init, SetContent', function () {
-            let docHead = editor.getDoc().head,
-                scriptId,
-                scriptElm;
-
-            scriptId  = editor.dom.uniqueId();
-            scriptElm = editor.dom.create('script', {
+            let docHead = editor.getDoc().head;
+            let scriptId  = editor.dom.uniqueId();
+            let scriptElm = editor.dom.create('script', {
                 id: scriptId,
                 type: 'text/javascript'
             }, 'var Pvtmed = ' + JSON.stringify(Pvtmed) + ';');

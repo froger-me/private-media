@@ -1,66 +1,154 @@
-/* global Pvtmed */
-jQuery(document).ready(function($) {
-	var label   = $('.compat-field-pvtmed th').html(),
-		content = $('.compat-field-pvtmed .field').html(),
-		row     = label + content;
+/* global Pvtmed, wp */
 
-	$('.compat-field-pvtmed').html(row);
+jQuery(document).ready(function ($) {
+    //debug
+    //console.dir(Pvtmed);
 
-	$(document).ajaxComplete( function (e, xhr, settings) {
-		var data = decodeURIComponent(settings.data);
+    const label   = $('.compat-field-pvtmed th').html();
+    const content = $('.compat-field-pvtmed .field').html();
+    const row     = label + content;
 
-		if (-1 !== data.indexOf('action=save-attachment-compat')) {
-			var input           = $('.attachment-info [data-setting="url"] input'),
-				containsPrivate = (-1 !== input.val().indexOf(Pvtmed.privateUrlBase)),
-				containsPublic  = (-1 !== input.val().indexOf(Pvtmed.publicUrlBase)),
-				toPublic        = ( -1 === data.indexOf('pvtmed') ),
-				toPrivate       = ( -1 !== data.indexOf('pvtmed') ),
-				hasChanged      = (containsPrivate && toPublic) || (containsPublic && toPrivate);
+    $('.compat-field-pvtmed').html(row);
 
-			if ( hasChanged ) {
-				var sourceBase      = (toPrivate) ? Pvtmed.publicUrlBase : Pvtmed.privateUrlBase,
-					destinationBase = (toPrivate) ? Pvtmed.privateUrlBase : Pvtmed.publicUrlBase,
-					src             = input.val().replace(sourceBase, destinationBase);
+    $(document).ajaxComplete(function (e, xhr, settings) {
+        const data = decodeURIComponent(settings.data);
 
-				input.val(src);
+        if (-1 !== data.indexOf('action=save-attachment-compat')) {
+            const input           = $('.attachment-info [data-setting="url"] input');
+            const containsPrivate = (-1 !== input.val().indexOf(Pvtmed.privateUrlBase));
+            const containsPublic  = (-1 !== input.val().indexOf(Pvtmed.publicUrlBase));
+            const toPublic        = ( -1 === data.indexOf('pvtmed') );
+            const toPrivate       = ( -1 !== data.indexOf('pvtmed') );
+            const hasChanged      = (containsPrivate && toPublic) || (containsPublic && toPrivate);
 
-				if (0 < $('.media-modal-content video').length) {
+            if ( hasChanged ) {
+                const sourceBase      = (toPrivate) ? Pvtmed.publicUrlBase : Pvtmed.privateUrlBase;
+                const destinationBase = (toPrivate) ? Pvtmed.privateUrlBase : Pvtmed.publicUrlBase;
+                const src             = input.val().replace(sourceBase, destinationBase);
 
-					$('.media-modal-content video').each(function(index, el) {
-						var video = $(el);
+                input.val(src);
 
-						video.attr('src', src);
-						video.find('source').attr('src', src);
-					});
-				}
+                if (0 < $('.media-modal-content video').length) {
 
-				input.removeClass('pvtmed-highlight').addClass('pvtmed-highlight');
+                    $('.media-modal-content video').each(function(index, el) {
+                        const video = $(el);
 
-				setTimeout(function(){
-					input.removeClass('pvtmed-highlight');
-				},3500);
-			}
-		}
-	});
+                        video.attr('src', src);
+                        video.find('source').attr('src', src);
+                    });
+                }
 
-	var getConfirm = function() {
-		var r = window.confirm(Pvtmed.deactivateConfirm);
+                input.removeClass('pvtmed-highlight').addClass('pvtmed-highlight');
 
-		return r;
-	};
+                setTimeout(function(){
+                    input.removeClass('pvtmed-highlight');
+                },3500);
+            }
+        }
+    });
 
-	$('.wp-list-table.plugins tr[data-slug="private-media"] .deactivate a').on( 'click', function() {
-		return getConfirm();
-	});
+    const getConfirm = function () {
+        const r = window.confirm(Pvtmed.deactivateConfirm);
 
-	if ($('.wp-list-table.plugins tr[data-slug="private-media"] input[type="checkbox"]').prop('checked') &&
+        return r;
+    };
+
+    $('.wp-list-table.plugins tr[data-slug="private-media"] .deactivate a').on( 'click', function() {
+        return getConfirm();
+    });
+
+    if ($('.wp-list-table.plugins tr[data-slug="private-media"] input[type="checkbox"]').prop('checked') &&
 		('deactivate-selected' === $('#bulk-action-selector-top').val() || 'deactivate-selected' === $('#bulk-action-selector-bottom').val())) {
-		$('.plugins-php #bulk-action-form').on('submit', function(e) {
-			e.preventDefault();
+        $('.plugins-php #bulk-action-form').on('submit', function(e) {
+            e.preventDefault();
 
-			if (getConfirm()) {
-				$(this).submit();
-			}
-		});
-	}
+            if (getConfirm()) {
+                $(this).submit();
+            }
+        });
+    }
+
+    /**
+     * Display a lock icon on private files.
+     */
+    function showAttachmentPrivateIcon() {
+        if (!wp.media.view.Attachment) {
+            return;
+        }
+
+        //debug
+        //console.dir(wp.media.view.Attachment);
+        //console.dir(wp.media.view.Attachment.prototype.template);
+
+        const templateNode = $('#tmpl-attachment');
+
+        if (!templateNode) {
+            return;
+        }
+
+        const template = templateNode.text();
+
+        //debug
+        //console.dir(templateNode);
+        //console.dir(templateNode.text());
+        //console.dir(templateNode.html());
+
+        //modify image part
+        let html = '';
+        let lastPos = 0;
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            //find img element
+            const startPos = template.indexOf('<img ', lastPos);
+
+            if (startPos === -1) {
+                break;
+            }
+
+            let endPos = template.indexOf(' />', startPos + 4);
+
+            if (endPos === -1) {
+                break;
+            }
+
+            endPos += 3;
+
+            html += template.substring(lastPos, startPos);
+            lastPos = endPos;
+
+            //modify
+            const imgHtml = template.substring(startPos, endPos);
+
+            html += imgHtml;
+            html += '<# if ( data.privateMedia ) { #>';
+            html += '<span class="dashicons dashicons-lock"></span>';
+            html += '<# } #>';
+        }
+
+        html += template.substring(lastPos);
+
+        //debug
+        //console.dir(html);
+
+        //store in DOM
+        const script = document.createElement('script');
+
+        script.type = 'text/html';
+        script.id = 'tmpl-attachment-pvtmed';
+        script.innerHTML = '<div class="pvtmed-attachment">' + html + '</div>';
+
+        document.head.appendChild(script);
+
+        /*
+        $('body').append($('<script type="text/html" id="tmpl-attachment-pvtmed" />', {
+            html
+        }));
+        */
+
+        //use new template
+        wp.media.view.Attachment.prototype.template = wp.media.template('attachment-pvtmed');
+    }
+
+    showAttachmentPrivateIcon();
 });

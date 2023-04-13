@@ -5,9 +5,11 @@ const { src, dest, parallel } = gulp;
 import gutil from 'gulp-util';
 import rename from 'gulp-rename';
 import terser from 'gulp-terser';
+import cssnano from 'gulp-cssnano';
 
 //directories
-const DIR_ASSETS_JS = './assets/js';
+const DIR_ASSETS_CSS = './assets/css';
+const DIR_ASSETS_JS  = './assets/js';
 
 /**
  * Terser options
@@ -93,14 +95,21 @@ async function minifyJavaScriptFile(opts) {
  * Build minified JS files.
  */
 async function minifyJavaScript() {
-    // 1) main
+    // 1) admin main
+    await minifyJavaScriptFile({
+        src: DIR_ASSETS_JS + '/admin/main.js',
+        rename: 'main.min.js',
+        dest: DIR_ASSETS_JS + '/admin'
+    });
+
+    // 2) main
     await minifyJavaScriptFile({
         src: DIR_ASSETS_JS + '/main.js',
         rename: 'main.min.js',
         dest: DIR_ASSETS_JS
     });
 
-    // 2) TinyMCE
+    // 3) TinyMCE
     await minifyJavaScriptFile({
         src: DIR_ASSETS_JS + '/tinymce.js',
         rename: 'tinymce.min.js',
@@ -108,13 +117,52 @@ async function minifyJavaScript() {
     });
 }
 
-//TODO build CSS
+/**
+ * cssnano option.
+ */
+const CSSNANO_OPTS = {
+    //don't change z-index values
+    zindex: false
+};
+
+/**
+ * Minimize CSS.
+ *
+ * @param {object} opts
+ * @returns
+ */
+function minifyCSSFile(opts) {
+    return src(opts.src)
+        /*
+        .pipe(sass.sync({
+            //empty
+        }))
+        //autoprefix
+        .pipe(sassAutoprefixerPlugin())
+        */
+        .pipe(rename(opts.rename))
+        .pipe(cssnano(CSSNANO_OPTS))
+        .pipe(dest(opts.dest));
+}
+
+/**
+ * Build minified CSS.
+ */
+async function minifyAdminCSS() {
+    // 1) main
+    return minifyCSSFile({
+        src: DIR_ASSETS_CSS + '/admin/main.css',
+        rename: 'main.min.css',
+        dest: DIR_ASSETS_CSS + '/admin'
+    });
+}
 
 /**
  * Main build task.
  */
 const buildTasks = parallel(
-    minifyJavaScript
+    minifyJavaScript,
+    minifyAdminCSS
 );
 
 export default buildTasks;

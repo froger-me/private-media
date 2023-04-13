@@ -4,13 +4,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly
 }
 
+/**
+ * Main plugin class.
+ *
+ * Manages file handling and admin interface integration.
+ */
 class Private_Media {
-
 	protected $request_handler;
-	protected $attachement_manager;
+	protected Private_Media_Attachment_Manager $attachment_manager;
 
 	protected static $doing_private_media_api_request;
 
+	/**
+	 * Create instance.
+	 */
 	public function __construct( $request_handler, $attachment_manager, $init_hooks = false ) {
 		WP_Filesystem();
 
@@ -18,30 +25,53 @@ class Private_Media {
 		$this->attachment_manager = $attachment_manager;
 
 		if ( $init_hooks ) {
-			add_filter( 'query_vars', array( $this, 'add_query_vars' ), -10, 1 );
-			add_action( 'parse_request', array( $this, 'parse_request' ), -10, 0 );
+			//request handling
+			add_filter( 'query_vars', [ $this, 'add_query_vars' ], -10, 1 );
+			add_action( 'parse_request', [ $this, 'parse_request' ], -10, 0 );
+
+			//public APIs
+			add_filter( 'pvtmed_is_attachment_private', [ $this, 'api_is_attachment_private' ], 10, 2);
+			add_filter( 'pvtmed_get_attachment_permissions', [ $this, 'api_attachment_permissions' ], 10, 2);
+			add_action( 'pvtmed_set_attachment_permissions', [ $this, 'api_set_permissions' ], 10, 2 );
 
 			if ( ! self::is_doing_api_request() ) {
-				add_action( 'init', array( $this, 'add_endpoints' ), -10, 0 );
-				add_action( 'init', array( $this, 'register_activation_notices' ), 99, 0 );
-				add_action( 'init', array( $this, 'maybe_flush' ), 99, 0 );
-				add_action( 'init', array( $this, 'load_textdomain' ), 10, 0 );
-				add_action( 'wp_enqueue_scripts', array( $this, 'add_frontend_scripts' ), -10, 0 );
+				//general handling
+				add_action( 'init', [ $this, 'add_endpoints' ], -10, 0 );
+				add_action( 'init', [ $this, 'register_activation_notices' ], 99, 0 );
+				add_action( 'init', [ $this, 'maybe_flush' ], 99, 0 );
+				add_action( 'init', [ $this, 'load_textdomain' ], 10, 0 );
 
+				add_action( 'wp_enqueue_scripts', [ $this, 'add_frontend_scripts' ], -10, 0 );
+
+				//admin only
 				if ( is_admin() ) {
-					add_action( 'wp_tiny_mce_init', array( $this, 'add_wp_tiny_mce_init_script' ), -10, 0 );
+					add_action( 'wp_tiny_mce_init', [ $this, 'add_wp_tiny_mce_init_script' ], -10, 0 );
 
-					add_filter( 'admin_enqueue_scripts', array( $this, 'add_admin_scripts' ), -10, 1 );
-					add_filter( 'attachment_fields_to_save', array( $this, 'attachment_field_settings_save' ), 10, 2 );
-					add_filter( 'attachment_fields_to_edit', array( $this, 'attachment_field_settings' ), 10, 2 );
+					add_filter( 'admin_enqueue_scripts', [ $this, 'add_admin_scripts' ], -10, 1 );
+
+					//attachment settings
+					add_filter( 'attachment_fields_to_save', [ $this, 'attachment_field_settings_save' ], 10, 2 );
+					add_filter( 'attachment_fields_to_edit', [ $this, 'attachment_field_settings' ], 10, 2 );
+
+					//media grid view
+					add_filter( 'wp_prepare_attachment_for_js', [ $this, 'attachment_js_data' ], 10, 3 );
+
+					//media list view
+					add_filter( 'manage_media_columns', [ $this, 'add_media_list_column' ], 10, 2 );
+					add_action( 'manage_media_custom_column', [ $this, 'render_media_list_column' ], 10, 2 );
 				}
 			}
 		}
 	}
 
+	/**
+	 * The plugin got activated.
+	 */
 	public static function activate() {
+		//update rewrite rules later
 		set_transient( 'pvtmed_flush', 1, 60 );
 
+		// 1) setup directories
 		$manager = new Private_Media_Attachment_Manager();
 		$result  = $manager->maybe_setup_directories();
 
@@ -52,8 +82,10 @@ class Private_Media {
 			die( $error_message ); // @codingStandardsIgnoreLine
 		}
 
+		// 2) move private attachments
 		$manager->apply_plugin_private_policy( true );
 
+		// 3) install must-use plugin
 		$result = self::maybe_setup_mu_plugin();
 
 		if ( $result ) {
@@ -63,17 +95,28 @@ class Private_Media {
 		}
 	}
 
+	/**
+	 * The plugin got deactivated.
+	 */
 	public static function deactivate() {
 		$manager = new Private_Media_Attachment_Manager();
 
+		//move private attachments to uploads folder
 		$manager->apply_plugin_private_policy( false );
+
 		flush_rewrite_rules();
 	}
 
+	/**
+	 * Uninstall the plugin.
+	 */
 	public static function uninstall() {
 		require_once PVTMED_PLUGIN_PATH . 'uninstall.php';
 	}
 
+	/**
+	 * Setup of must-use plugin failed.
+	 */
 	public static function setup_mu_plugin_failure_notice() {
 		$class = 'notice notice-error';
 		// translators: %1$s is the path to the mu-plugins directory, %2$s is the path of the source MU Plugin
@@ -85,6 +128,9 @@ class Private_Media {
 		printf( '<div class="%1$s"><p>%2$s</p></div>', $class, $message ); // @codingStandardsIgnoreLine
 	}
 
+	/**
+	 * Setup of must-use plugin was successful.
+	 */
 	public static function setup_mu_plugin_success_notice() {
 		$class = 'notice notice-info is-dismissible';
 		// translators: %1$s is the path to the mu-plugin
@@ -95,8 +141,11 @@ class Private_Media {
 		printf( '<div class="%1$s"><p>%2$s</p></div>', $class, $message ); // @codingStandardsIgnoreLine
 	}
 
+	/**
+	 * Check if requesting private file.
+	 */
 	public static function is_doing_api_request() {
-
+		//get state
 		if ( null === self::$doing_private_media_api_request ) {
 			self::$doing_private_media_api_request = ( false !== strpos( $_SERVER['REQUEST_URI'], Private_Media_Attachment_Manager::get_root_dir_name() ) );
 		}
@@ -104,8 +153,10 @@ class Private_Media {
 		return self::$doing_private_media_api_request;
 	}
 
+	/**
+	 * Show must-use plugin notices.
+	 */
 	public function register_activation_notices() {
-
 		if ( get_transient( 'pvtmed_activated_mu_failure' ) ) {
 			delete_transient( 'pvtmed_activated_mu_failure' );
 			add_action( 'admin_notices', array( __CLASS__, 'setup_mu_plugin_failure_notice' ), 10, 0 );
@@ -117,28 +168,40 @@ class Private_Media {
 		}
 	}
 
+	/**
+	 * Load language files.
+	 */
 	public function load_textdomain() {
 		load_plugin_textdomain( 'pvtmed', false, 'private-media/languages' );
 	}
 
+	/**
+	 * Update rewrite rules if needed.
+	 */
 	public function maybe_flush() {
-
 		if ( get_transient( 'pvtmed_flush' ) ) {
 			delete_transient( 'pvtmed_flush' );
+
 			flush_rewrite_rules();
 		}
 	}
 
+	/**
+	 * Add query vars used by rewrite rule.
+	 */
 	public function add_query_vars( $query_vars ) {
-		$vars       = array(
+		$vars = [
 			'__pvtmed',
 			'file',
-		);
+		];
 		$query_vars = array_merge( $query_vars, $vars );
 
 		return $query_vars;
 	}
 
+	/**
+	 * Intercept private file requests.
+	 */
 	public function parse_request() {
 		global $wp;
 
@@ -146,146 +209,241 @@ class Private_Media {
 			$this->request_handler->handle_request();
 
 			exit();
-		} else {
+		}
+
+		//check hotlinking support
+		$hotlinkFeature = apply_filters( 'pvtmed_hotlink_feature', true );
+
+		if ($hotlinkFeature) {
+			//not a private media access -> set hotlink cookie
 			setcookie( 'pvtmed', 1, current_time( 'timestamp' ) + 10, '/' );
 		}
 	}
 
+	/**
+	 * Define rewrite rule for delivering protected file.
+	 */
 	public function add_endpoints() {
+		//file accessed at: https://<domain>/pvtmed/<file.ext>
 		add_rewrite_rule( '^pvtmed/(.*)$', 'index.php?__pvtmed=1&file=$matches[1]', 'top' );
 	}
 
-	public function attachment_field_settings_save( $attachment, $fields ) {
+	/**
+	 * Filter attachments fields to be saved.
+	 *
+	 * Note: $attachment is $post array (not WP_Post instance)
+	 *
+	 * See https://github.com/WordPress/WordPress/blob/master/wp-admin/includes/ajax-actions.php#L3186
+	 */
+	public function attachment_field_settings_save( array $attachment, array $fields ) {
 		global $wp_roles;
 
-		$roles       = $wp_roles->get_names();
-		$permissions = get_post_meta( $attachment['ID'], 'pvtmed_settings', true );
+		//get roles and attachment permissions
+		$attachment_id = $attachment['ID'];
+		$roles         = $wp_roles->get_names();
+		$permissions   = Private_Media_Attachment_Manager::get_attachment_permissions( $attachment_id );
 
 		if ( empty( $permissions ) ) {
-			$permissions = array();
+			$permissions = [];
 		}
 
+		//add custom permissions
+		$permissions = apply_filters('pvtmed_add_permissions', $permissions, $attachment, $fields);
+
+		//check all roles
 		foreach ( $roles as $key => $role_name ) {
-			$permissions[ $key ] = ( isset( $fields[ 'pvtmed_' . $key ] ) ) ? 1 : 0;
+			if ( isset( $fields[ 'pvtmed_' . $key ] ) ) {
+				$permissions[ $key ] = 1;
+			} else {
+				unset( $permissions[ $key ] );
+			}
 		}
 
-		$permissions['disable_hotlinks'] = ( isset( $fields['pvtmed_disable_hotlinks'] ) ) ? 1 : 0;
-
-		if ( in_array( 1, array_values( $permissions ), true ) ) {
-			$mime_type = $attachment['post_mime_type'];
-
-			if ( 0 === strpos( $attachment['post_mime_type'], 'video' ) ) {
-				update_option( 'pvtmed_deactivate_migrate_video', true, false );
-			}
-
-			if ( 0 === strpos( $attachment['post_mime_type'], 'audio' ) ) {
-				update_option( 'pvtmed_deactivate_migrate_audio', true, false );
-			}
-
-			$this->attachment_manager->move_media( $attachment['ID'], 'private' );
+		//check always private
+		if ( isset( $fields['pvtmed_always_private'] ) ) {
+			$permissions['always_private'] = 1;
 		} else {
-			$this->attachment_manager->move_media( $attachment['ID'], 'public' );
+			unset( $permissions['always_private'] );
 		}
 
-		update_post_meta( $attachment['ID'], 'pvtmed_settings', $permissions );
+		//check hotlinking
+		if ( isset( $fields['pvtmed_disable_hotlinks'] ) ) {
+			$permissions['disable_hotlinks'] = 1;
+		} else {
+			unset( $permissions['disable_hotlinks'] );
+		}
+
+		//apply
+		$this->attachment_manager->set_attachment_permissions( $attachment, $permissions );
 
 		return $attachment;
 	}
 
-	public function attachment_field_settings( $form_fields, $attachment ) {
-		$permissions = get_post_meta( $attachment->ID, 'pvtmed_settings', true );
+	/**
+	 * Display attachments settings.
+	 */
+	public function attachment_field_settings( array $form_fields, WP_Post $attachment ) {
+		//get permissions
+		$attachment_id = $attachment->ID;
+		$permissions = Private_Media_Attachment_Manager::get_attachment_permissions( $attachment_id );
 
 		global $wp_roles;
 
-		$roles       = $wp_roles->get_names();
-		$no_hotlinks = ( isset( $permissions['disable_hotlinks'] ) && 1 === $permissions['disable_hotlinks'] ) ? 'checked' : '';
-		$role_boxes  = '<div class="setting">';
+		$role_boxes = '<div class="setting">';
 
+		//show warning if file is being used
 		if ( $attachment->post_parent && -1 !== strpos( $attachment->post_mime_type, 'image' ) ) {
 			$role_boxes .= '<em>' . __( 'Warning: This media is already attached to at least one existing post. You may need to re-insert it to make sure it is still accessible after changing its Media Privacy settings.', 'pvtmed' ) . '</em>';
 		}
 
 		$role_boxes .= '<ul>';
-		$role_boxes .= '<li><span>' . __( 'Prevent hotlinks (even when not limited by role)', 'pvtmed' ) . '</span><input type="checkbox" name="attachments[' . $attachment->ID . '][pvtmed_disable_hotlinks]" id="attachments[pvtmed_disable_hotlinks]" value="1" ' . $no_hotlinks . '/></li>';
+
+		//always private checkbox (define access rules later or by custom filter)
+		$always_private = ( isset( $permissions['always_private'] ) && 1 === $permissions['always_private'] ) ? 'checked' : '';
+
+		$role_boxes .= '<li><span>' . __( 'Private file (always kept private)', 'pvtmed' ) . '</span><input type="checkbox" name="attachments[' . $attachment_id . '][pvtmed_always_private]" id="attachments[pvtmed_always_private]" value="1" ' . $always_private . '/></li>';
 		$role_boxes .= '<li> <hr/> </li>';
+
+		//hotlinking checkbox
+		$hotlinkFeature = apply_filters( 'pvtmed_hotlink_feature', true );
+
+		if ($hotlinkFeature) {
+			$no_hotlinks = ( isset( $permissions['disable_hotlinks'] ) && 1 === $permissions['disable_hotlinks'] ) ? 'checked' : '';
+
+			$role_boxes .= '<li><span>' . __( 'Prevent hotlinks (even when not limited by role)', 'pvtmed' ) . '</span><input type="checkbox" name="attachments[' . $attachment_id . '][pvtmed_disable_hotlinks]" id="attachments[pvtmed_disable_hotlinks]" value="1" ' . $no_hotlinks . '/></li>';
+			$role_boxes .= '<li> <hr/> </li>';
+		}
+
+		//role checkboxes
+		$roles = apply_filters( 'pvtmed_edit_roles', $wp_roles->get_names(), $permissions );
 
 		foreach ( $roles as $key => $role_name ) {
 			$role_checked = ( isset( $permissions[ $key ] ) && 1 === $permissions[ $key ] ) ? 'checked' : '';
 
 			// translators: %s is the role name
-			$role_boxes .= '<li><span>' . sprintf( __( 'Limit to %s role' ), $role_name ) . '</span><input type="checkbox" name="attachments[' . $attachment->ID . '][pvtmed_' . $key . ']" id="attachments[pvtmed_' . $key . ']" value="' . $key . '" ' . $role_checked . '/></li>';
+			$role_boxes .= '<li><span>' . sprintf( __( 'Limit to %s role' ), $role_name ) . '</span><input type="checkbox" name="attachments[' . $attachment_id . '][pvtmed_' . $key . ']" id="attachments[pvtmed_' . $key . ']" value="' . $key . '" ' . $role_checked . '/></li>';
 		}
 
+		//end of UI
 		$role_boxes .= '</ul></div>';
 
-		$form_fields['pvtmed'] = array(
-			'label' => __( 'Media Privacy', 'pvtmed' ),
-			'input' => 'html',
-			'html'  => $role_boxes,
-		);
+		//call filter
+		$role_boxes = apply_filters( 'pvtmed_edit_settings', $role_boxes, $attachment, $form_fields );
+
+		if ($role_boxes) {
+			$form_fields['pvtmed'] = [
+				'label' => __( 'Media Privacy', 'pvtmed' ),
+				'input' => 'html',
+				'html'  => $role_boxes
+			];
+		}
+
+		//debug
+		//$this->debug($form_fields);
 
 		return $form_fields;
 	}
 
+	/**
+	 * Add data for JavaScript rendering.
+	 */
+	public function attachment_js_data( array $response, WP_Post $attachment, $meta ) {
+		//add private media flag
+		$response['privateMedia'] = Private_Media_Attachment_Manager::is_private_attachment( $attachment->ID );
+
+		//debug
+		//$response['attachmentMeta'] = $meta;
+		//$response['allMeta'] = get_post_meta( $attachment->ID );
+
+		return $response;
+	}
+
+	/**
+	 * Add a column to the media list view.
+	 */
+	public function add_media_list_column( $posts_columns, $detached ) {
+		$posts_columns['pvtmed'] = __( 'Private Media', 'pvtmed' );
+
+		return $posts_columns;
+	}
+
+	/**
+	 * Render media list view column.
+	 */
+	public function render_media_list_column( string $column_name, int $post_id ) {
+		if ( $column_name === 'pvtmed' ) {
+			if ( Private_Media_Attachment_Manager::is_private_attachment( $post_id ) ) {
+				//display lock icon
+				echo '<span class="dashicons dashicons-lock"></span>';
+			} else {
+				//display open icon
+				echo '<span class="dashicons dashicons-unlock"></span>';
+			}
+		}
+	}
+
+	/**
+	 * Load frontend scripts.
+	 *
+	 * Used to workaround invalid URLs.
+	 */
 	public function add_frontend_scripts() {
-		global $wp_scripts;
+		//check non-admin usage
+		if (!is_admin() && !apply_filters( 'pvtmed_load_frontend', true )) {
+			return;
+		}
 
 		$debug = (bool) ( constant( 'WP_DEBUG' ) );
-
-		$upload_dir         = wp_upload_dir();
-		$site_url           = get_option( 'siteurl' );
-		$public_upload_url  = trailingslashit( $upload_dir['baseurl'] );
-		$private_upload_url = trailingslashit( $site_url ) . str_replace( ABSPATH, '', Private_Media_Attachment_Manager::get_data_dir() );
-		$private_upload_url = apply_filters( 'pvtmed_private_upload_url', $private_upload_url );
-
 		$js_ext  = ( $debug ) ? '.js' : '.min.js';
 		$version = filemtime( PVTMED_PLUGIN_PATH . 'assets/js/main' . $js_ext );
 
-		$script_params = array(
+		$script_params = [
 			'ajax_url'          => admin_url( 'admin-ajax.php' ),
 			'debug'             => $debug,
-			'publicUrlBase'     => $public_upload_url,
-			'privateUrlBase'    => $private_upload_url,
+			'publicUrlBase'     => Private_Media_Attachment_Manager::get_public_upload_url(),
+			'privateUrlBase'    => Private_Media_Attachment_Manager::get_private_upload_url(),
 			'isAdmin'           => is_admin(),
 			'brokenMessage'     => __( "Private Media Warning - a media in the post content has a broken source. An attempt to quickfix it dynamically will be performed, but it is recommended to delete it and insert it again.\nMedia URL:\n", 'pvtmed' ),
-			'scriptUrls'        => array(
+			'scriptUrls'        => [
 				trailingslashit( get_option( 'siteurl' ) ) . 'wp-includes/js/jquery/jquery.js',
 				PVTMED_PLUGIN_URL . 'assets/js/main' . $js_ext,
-			),
+			],
 			'deactivateConfirm' => __( "You are about to deactivate Private Media. All the media with restricted access will be publicly accessible again.\nIf you re-activate the plugin, Private Media will attempt to re-apply the privacy settings and fix possible broken links.\n\nAre you sure you want to do this?", 'pvtmed' ),
-		);
+		];
 
 		wp_enqueue_script( 'pvtmed-main', PVTMED_PLUGIN_URL . 'assets/js/main' . $js_ext, array( 'jquery' ), $version );
 		wp_localize_script( 'pvtmed-main', 'Pvtmed', $script_params );
 	}
 
+	/**
+	 * Load TinyMCE script.
+	 */
 	public function add_wp_tiny_mce_init_script() {
 		$debug = (bool) ( constant( 'WP_DEBUG' ) );
-
-		$upload_dir         = wp_upload_dir();
-		$site_url           = get_option( 'siteurl' );
-		$public_upload_url  = trailingslashit( $upload_dir['baseurl'] );
-		$private_upload_url = trailingslashit( $site_url ) . str_replace( ABSPATH, '', Private_Media_Attachment_Manager::get_data_dir() );
-		$private_upload_url = apply_filters( 'pvtmed_private_upload_url', $private_upload_url );
-
 		$js_ext  = ( $debug ) ? '.js' : '.min.js';
-		$version = filemtime( PVTMED_PLUGIN_PATH . 'assets/js/main' . $js_ext );
+		$version = filemtime( PVTMED_PLUGIN_PATH . 'assets/js/tinymce' . $js_ext );
 
 		printf( '<script type="text/javascript" src="%s"></script>', PVTMED_PLUGIN_URL . 'assets/js/tinymce' . $js_ext . '?ver=' . $version ); // @codingStandardsIgnoreLine
 	}
 
+	/**
+	 * Load admin scripts.
+	 */
 	public function add_admin_scripts( $hook ) {
 		global $parent_file;
 
 		$debug = (bool) ( constant( 'WP_DEBUG' ) );
-		$hooks = array(
+
+		//check page type
+		$hooks = [
 			'plugins.php',
 			'post.php',
 			'post-new.php',
 			'edit.php',
-		);
+		];
 
 		if ( in_array( $hook, $hooks, true ) || 'upload.php' === $parent_file ) {
+			//load script
 			$ext     = ( $debug ) ? '.js' : '.min.js';
 			$version = filemtime( PVTMED_PLUGIN_PATH . 'assets/js/admin/main' . $ext );
 
@@ -297,20 +455,25 @@ class Private_Media {
 				true
 			);
 
+			//load CSS
 			$ext     = ( $debug ) ? '.css' : '.min.css';
 			$version = filemtime( PVTMED_PLUGIN_PATH . 'assets/css/admin/main' . $ext );
 
+			//load frontend scripts too
 			$this->add_frontend_scripts();
 
 			wp_enqueue_style(
 				'pvtmed-admin-main',
 				PVTMED_PLUGIN_URL . 'assets/css/admin/main' . $ext,
-				array(),
+				[],
 				$version
 			);
 		}
 	}
 
+	/**
+	 * Handle plugin errors.
+	 */
 	protected static function trigger_plugin_error( $message, $err_type ) {
 		$action = filter_input( INPUT_GET, 'action' );
 
@@ -323,6 +486,9 @@ class Private_Media {
 		}
 	}
 
+	/**
+	 * Copy the endpoint optimizer to the must-use plugins folder.
+	 */
 	protected static function maybe_setup_mu_plugin() {
 		global $wp_filesystem;
 
@@ -342,6 +508,36 @@ class Private_Media {
 		return $result;
 	}
 
+	/**
+	 * Debug function.
+	 */
+	protected function debug($msg, $params = []) {
+		//pass to Quer Monitor
+		do_action('qm/debug', $msg, $params);
+	}
+
+	/**
+	 * Check if an attachment is private.
+	 *
+	 * Note: if Private Media is not active, filter returns $value.
+	 */
+	public function api_is_attachment_private($value, $attachment_id) {
+		return Private_Media_Attachment_Manager::is_private_attachment($attachment_id);
+	}
+
+	/**
+	 * Get all permissions of an attachment.
+	 *
+	 * Note: if Private Media is not active, filter returns $value.
+	 */
+	public function api_attachment_permissions($value, $attachment_id) {
+		return Private_Media_Attachment_Manager::get_attachment_permissions($attachment_id);
+	}
+
+	/**
+	 * Set an attachment private or public.
+	 */
+	public function api_set_permissions($attachment_id, $permissions = null) {
+		$this->attachment_manager->set_attachment_permissions( $attachment_id, $permissions );
+	}
 }
-
-

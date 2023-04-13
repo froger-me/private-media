@@ -4,12 +4,12 @@ Plugin Name: Private Media
 Plugin URI: https://github.com/froger-me/private-media/
 Text Domain: pvtmed
 Description: Add access restrictions to specific items of the WordPress Media Library.
-Version: 1.3
+Version: 1.4
 Author: Alexandre Froger, Christoph Bratschi
 Author URI: https://froger.me/
 GitHub Plugin URI: https://github.com/cbratschi/private-media
 Requires at least: 4.9.8
-Tested up to: 6.1.1
+Tested up to: 6.2
 Requires PHP: 7.4
 */
 
@@ -33,6 +33,9 @@ register_activation_hook( __FILE__, array( 'Private_media', 'activate' ) );
 register_deactivation_hook( __FILE__, array( 'Private_media', 'deactivate' ) );
 register_uninstall_hook( __FILE__, array( 'Private_media', 'uninstall' ) );
 
+/**
+ * Execute plugin.
+ */
 function pvtmed_run() {
 	require_once PVTMED_PLUGIN_PATH . 'inc/class-private-media-request-handler.php';
 
@@ -40,8 +43,10 @@ function pvtmed_run() {
 	$attachment_manager = new Private_Media_Attachment_Manager( true );
 	$pvtmed             = new Private_Media( $request_handler, $attachment_manager, true );
 }
+
 add_action( 'plugins_loaded', 'pvtmed_run', 10, 0 );
 
+//run migration scripts
 if ( ! Private_media::is_doing_api_request() ) {
 	require_once plugin_dir_path( __FILE__ ) . 'lib/wp-update-migrate/class-wp-update-migrate.php';
 

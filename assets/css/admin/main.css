@@ -71,3 +71,28 @@
   -o-animation:      pvtmed-highlight 1s infinite;
   animation:         pvtmed-highlight 1s infinite;
 }
+
+/* media grid icon */
+
+.pvtmed-attachment .thumbnail .centered {
+  position: relative !important;
+  transform: none !important;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pvtmed-attachment .thumbnail .centered img {
+  display: block;
+  transform: none !important;
+  position: static !important;
+}
+
+.pvtmed-attachment .thumbnail .centered span {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  bottom: 15px;
+  left: 3px;
+}
