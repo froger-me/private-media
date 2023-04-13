@@ -1,17 +1,16 @@
-# Private Media
-
-* Contributors: frogerme, cbratschi
-* Tags: media, uploads, private
-* Requires at least: 4.9.8
-* Tested up to: 6.2
-* Requires PHP: 7.4
-* Stable tag: trunk
-* License: GPLv2 or later
-* License URI: <http://www.gnu.org/licenses/gpl-2.0.html>
+=== Private Media ===
+Contributors: frogerme, cbratschi
+Tags: media, uploads, private
+Requires at least: 4.9.8
+Tested up to: 6.2
+Requires PHP: 7.4
+Stable tag: trunk
+License: GPLv2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 Add access restrictions to specific items of the WordPress Media Library.
 
-## Description
+== Description ==
 
 Ever wanted to make your media truely private? Make sure images, videos and other files are only accessible to chosen roles, or cannot be hotlinked, with permissions specifically set per item.
 
@@ -30,7 +29,7 @@ A [Must Use Plugin](https://codex.wordpress.org/Must_Use_Plugins) `pvtmed-endpoi
 
 The media privacy policy is set per media item - therefore, this plugin is not a replacement for general image hotlink prevention plugins, but is ideal for anyone looking for preventing direct links to files depending on specific conditions.
 
-## Installation
+== Installation ==
 
 This section describes how to install the plugin and get it working.
 
@@ -38,10 +37,9 @@ This section describes how to install the plugin and get it working.
 2. Activate the plugin through the 'Plugins' screen in WordPress
 3. Edit Media Privacy Settings on media items in the Media Library
 
-## Changelog
+== Changelog ==
 
-### 1.4
-
+= 1.4 =
 * Added pvtmed_load_frontend filter: opt-out of loading main.js on all pages.
 * Added pvtmed_hotlink_feature filter: opt-out of hotlinking feature.
 * Added pvtmed_has_permissions filter: implement own permission system.
@@ -63,20 +61,16 @@ This section describes how to install the plugin and get it working.
 * URL decode file query parameter.
 * Support PDF preview images.
 
-### 1.3
-
+= 1.3 =
 * fixed crash in status_header() call
 * added build system
 * check if TinyMCE is available
 
-### 1.2
+= 1.2 =
+* Add `pvtmed_private_upload_url` and `pvtmed_htaccess_rules` filters (see [this support request for details]())
 
-* Add `pvtmed_private_upload_url` and `pvtmed_htaccess_rules` filters
-
-### 1.1
-
+= 1.1 =
 * Bump version - supported by WordPress 5.0 (post edit screen fallbacks only in Classic Editor)
 
-### 1.0
-
+= 1.0 =
 * First version
