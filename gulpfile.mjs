@@ -6,6 +6,7 @@ import gutil from 'gulp-util';
 import rename from 'gulp-rename';
 import terser from 'gulp-terser';
 import cssnano from 'gulp-cssnano';
+import zip from 'gulp-zip';
 
 //directories
 const DIR_ASSETS_CSS = './assets/css';
@@ -54,7 +55,7 @@ function terserTopRetain(def) {
  *
  * @param {*} stream
  */
-export const promiseStream = stream => new Promise((resolve, reject) => {
+const promiseStream = stream => new Promise((resolve, reject) => {
     stream
         .on('end', resolve)
         .on('finish', resolve)
@@ -166,3 +167,26 @@ const buildTasks = parallel(
 );
 
 export default buildTasks;
+
+/**
+ * Zip plugin.
+ *
+ * @returns
+ */
+function zipPrivateMedia() {
+    return src([
+        './**',
+
+        //exclude node_modules
+        '!**/node_modules{,/**}',
+
+        //exclude file itseld
+        '!./private-media.zip'
+    ])
+        .pipe(zip('private-media.zip'))
+        .pipe(dest('.'));
+}
+
+export {
+    zipPrivateMedia as zip
+};
