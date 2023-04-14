@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Manages file handling and admin interface integration.
  */
 class Private_Media {
-	protected $request_handler;
+	protected Private_Media_Request_Handler $request_handler;
 	protected Private_Media_Attachment_Manager $attachment_manager;
 
 	protected static $doing_private_media_api_request;
@@ -18,7 +18,7 @@ class Private_Media {
 	/**
 	 * Create instance.
 	 */
-	public function __construct( $request_handler, $attachment_manager, $init_hooks = false ) {
+	public function __construct( Private_Media_Request_Handler $request_handler, Private_Media_Attachment_Manager $attachment_manager, $init_hooks = false ) {
 		WP_Filesystem();
 
 		$this->request_handler    = $request_handler;
@@ -30,8 +30,9 @@ class Private_Media {
 			add_action( 'parse_request', [ $this, 'parse_request' ], -10, 0 );
 
 			//public APIs
-			add_filter( 'pvtmed_is_attachment_private', [ $this, 'api_is_attachment_private' ], 10, 2);
-			add_filter( 'pvtmed_get_attachment_permissions', [ $this, 'api_attachment_permissions' ], 10, 2);
+			add_filter( 'pvtmed_is_attachment_private', [ $this, 'api_is_attachment_private' ], 10, 2 );
+			add_filter( 'pvtmed_is_attachment_authorized', [ $this, 'api_is_attachment_authorized' ], 10, 3 );
+			add_filter( 'pvtmed_get_attachment_permissions', [ $this, 'api_attachment_permissions' ], 10, 2 );
 			add_action( 'pvtmed_set_attachment_permissions', [ $this, 'api_set_permissions' ], 10, 2 );
 
 			if ( ! self::is_doing_api_request() ) {
@@ -523,6 +524,21 @@ class Private_Media {
 	 */
 	public function api_is_attachment_private($value, $attachment_id) {
 		return Private_Media_Attachment_Manager::is_private_attachment($attachment_id);
+	}
+
+	/**
+	 * Check if a user is authorized to access the attachment.
+	 *
+	 * Note: if Private Media is not active, filter returns $value.
+	 */
+	public function api_is_attachment_authorized($value, int $attachment_id, WP_User $user = null) {
+		//check if public
+		if (!Private_Media_Attachment_Manager::is_private_attachment($attachment_id)) {
+			return true;
+		}
+
+		//check permission
+		return $this->request_handler->is_authorized($attachment_id, $user) === true;
 	}
 
 	/**

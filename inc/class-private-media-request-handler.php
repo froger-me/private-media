@@ -19,27 +19,37 @@ class Private_Media_Request_Handler {
 	public function handle_request() {
 		global $wp_filesystem;
 
+		//get attachment
+		$file = $this->get_file(); //get the file path
+		$attachment_id = $this->file_url_to_attachment_id( $file );
+
+		if ( ! $attachment_id ) {
+			//attachment not found
+
+			//log
+			error_log('-> attachment not found: ' . $file);
+
+			//block (private but permissions unknown)
+			header( 'PvtMed-Error: Unknown Attachment' );
+			$this->send_forbidden();
+		}
+
 		//check if authorized
-		$authorized = $this->is_authorized();
+		$authorized = $this->is_authorized( $attachment_id );
 
 		if ( $authorized ) {
 			//authorized
 
 			// 1) check file exists
-			$file = Private_Media_Attachment_Manager::get_data_dir() . str_replace( '..', '', $this->get_file() );
+			$file = Private_Media_Attachment_Manager::get_data_dir() . str_replace( '..', '', $file );
 
 			if ( ! $wp_filesystem->is_file( $file ) ) {
 				//file not found
-				$this->send_response( '404' );
-			} else if ( $authorized === 404 ) {
-				//file exists but attachment not found (most likely a bug in our code)
 
 				//log
-				error_log('-> file exists: ' . $file);
+				error_log('-> attachment file not found: ' . $file);
 
-				//block (private but permissions unknown)
-				header( 'PvtMed-Error: Unknown Attachment' );
-				$this->send_forbidden();
+				$this->send_response( '404' );
 			}
 
 			// 2) get content type
@@ -57,7 +67,7 @@ class Private_Media_Request_Handler {
 
 			// 3) get last modified (for etag)
 			$last_modified = gmdate( 'D, d M Y H:i:s', $wp_filesystem->mtime( $file ) );
-			$etag          = '"' . md5( $last_modified ) . '"';
+			$etag = '"' . md5( $last_modified ) . '"';
 
 			//send headers
 			$this->send_headers( $file, $mimetype, $last_modified, $etag );
@@ -103,15 +113,13 @@ class Private_Media_Request_Handler {
 
 	/**
 	 * Check if access is granted.
+	 *
+	 * @param $user user to verify or null for current user
+	 * @return boolean|int boolean value or 404 if unknown file
 	 */
-	protected function is_authorized() {
-		//get attachment
-		$file = $this->get_file(); //get the file path
-		$attachment_id = $this->file_url_to_attachment_id( $file );
-
-		if (!$attachment_id) {
-			//unknown attachment file
-			return 404;
+	public function is_authorized(int $attachment_id, WP_User $user = null) {
+		if ( ! $attachment_id ) {
+			return false;
 		}
 
 		//check permissions
@@ -124,7 +132,7 @@ class Private_Media_Request_Handler {
 			$post_parent_id     = $attachment->post_parent;
 
 			//call filter first (overwrite default behavior)
-		 	if (apply_filters( 'pvtmed_has_permissions', false, $attachment, $permissions )) {
+		 	if (apply_filters( 'pvtmed_has_permissions', false, $attachment, $permissions, $user )) {
 				return true;
 			}
 
@@ -143,9 +151,12 @@ class Private_Media_Request_Handler {
 			//check if user role rules are active
 			if ( in_array( 1, $permissions, true ) ) {
 				//check if user is logged in
-				if ( is_user_logged_in() ) {
-					$current_user = wp_get_current_user();
-					$roles        = $current_user->roles;
+				if ( ! $user ) {
+					$user = wp_get_current_user();
+				}
+
+				if ( $user->exists() ) {
+					$roles = $user->roles;
 
 					//collect active permissions
 					$authorized_roles = [];
@@ -167,6 +178,7 @@ class Private_Media_Request_Handler {
 					//check at least one role matches
 					$authorized = ! empty( array_intersect( $authorized_roles, $roles ) );
 				} else {
+					//no logged in
 					$authorized = false;
 				}
 			}
@@ -175,7 +187,7 @@ class Private_Media_Request_Handler {
 		}
 
 		//call filter
-		return apply_filters( 'pvtmed_is_authorized', $authorized, $attachment_id, $permissions );
+		return apply_filters( 'pvtmed_is_authorized', $authorized, $attachment_id, $permissions, $user );
 	}
 
 	/**
