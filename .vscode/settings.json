@@ -3,5 +3,8 @@
         "first-time",
         "*.go",
         "*"
+    ],
+    "githubPullRequests.ignoredPullRequestBranches": [
+        "master"
     ]
 }
