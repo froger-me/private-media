@@ -39,6 +39,9 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+= 1.7 =
+* Duplicator Pro: reset .htaccess file on cloned site
+
 = 1.6 =
 * Added pvtmed_is_attachment_authorized filter: check if active user is authorized.
 

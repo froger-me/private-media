@@ -4,12 +4,12 @@ Plugin Name: Private Media
 Plugin URI: https://github.com/froger-me/private-media/
 Text Domain: pvtmed
 Description: Add access restrictions to specific items of the WordPress Media Library.
-Version: 1.6
+Version: 1.7
 Author: Alexandre Froger, <a href="https://appamics.com">Christoph Bratschi</a>
 Author URI: https://froger.me/
 GitHub Plugin URI: https://github.com/cbratschi/private-media
 Requires at least: 4.9.8
-Tested up to: 6.2
+Tested up to: 6.3.1
 Requires PHP: 7.4
 */
 

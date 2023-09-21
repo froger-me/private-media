@@ -51,6 +51,9 @@ class Private_Media_Attachment_Manager {
 			add_filter( 'wp_get_attachment_url', [ $this, 'wp_get_attachment_url' ], -10, 2 );
 			add_filter( 'get_image_tag_class', [ $this, 'get_image_tag_class' ], -10, 4 );
 			add_filter( 'wp_calculate_image_srcset', [ $this, 'wp_calculate_image_srcset' ], 10, 5 );
+
+			//Duplicator Pro
+			add_action( 'duplicator_pro_first_login_after_install', [ $this, 'reset_htaccess'] );
 		}
 	}
 
@@ -83,7 +86,7 @@ class Private_Media_Attachment_Manager {
 	 *
 	 * .htaccess file redirect to rewrite rulle ULR (/pvtmed/<file>)
 	 */
-	public function maybe_setup_directories() {
+	public function maybe_setup_directories($reset = false) {
 		// 1) create the data directory
 		$root_dir = self::get_data_dir();
 		$result   = true;
@@ -97,11 +100,18 @@ class Private_Media_Attachment_Manager {
 		// 2) create .htaccess file in data directory
 		$htaccess_path = $root_dir . '.htaccess';
 
-		if ( ! $wp_filesystem->is_file( $htaccess_path ) ) {
+		if ( $reset || ! $wp_filesystem->is_file( $htaccess_path ) ) {
 			$result = $result && $this->generate_restricted_htaccess( $htaccess_path );
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Reset the .htaccess file (e.g. after server migration).
+	 */
+	public function reset_htaccess() {
+		$this->maybe_setup_directories(true);
 	}
 
 	/**
