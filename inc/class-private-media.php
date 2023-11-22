@@ -362,7 +362,7 @@ class Private_Media {
 	/**
 	 * Add a column to the media list view.
 	 */
-	public function add_media_list_column( $posts_columns, $detached ) {
+	public function add_media_list_column( $posts_columns, $detached = true ) {
 		$posts_columns['pvtmed'] = __( 'Private Media', 'pvtmed' );
 
 		return $posts_columns;
