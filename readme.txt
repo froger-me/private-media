@@ -2,8 +2,8 @@
 Contributors: frogerme, cbratschi
 Tags: media, uploads, private
 Requires at least: 4.9.8
-Tested up to: 6.2
-Requires PHP: 7.4
+Tested up to: 6.4.1
+Requires PHP: 8.0
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -38,6 +38,9 @@ This section describes how to install the plugin and get it working.
 3. Edit Media Privacy Settings on media items in the Media Library
 
 == Changelog ==
+
+= 1.8 =
+* fixed manage_media_columns optional parameter
 
 = 1.7 =
 * Duplicator Pro: reset .htaccess file on cloned site
