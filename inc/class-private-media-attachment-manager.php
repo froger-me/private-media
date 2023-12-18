@@ -18,22 +18,24 @@ class Private_Media_Attachment_Manager {
 	protected static $fix_prefixes = [
 		'default' => [
 			'src'  => 'src="',
-			'href' => 'href="',
+			'href' => 'href="'
 		],
+
 		'video'   => [
 			'flv'  => 'flv="',
 			'mp4'  => 'mp4="',
 			'm4v'  => 'm4v="',
 			'webm' => 'webm="',
 			'ogv'  => 'ogv="',
-			'wmv'  => 'wmv="',
+			'wmv'  => 'wmv="'
 		],
+
 		'audio'   => [
 			'mp3' => 'mp3="',
 			'm4a' => 'm4a="',
 			'ogg' => 'ogg="',
 			'wav' => 'wav="',
-			'wma' => 'wma="',
+			'wma' => 'wma="'
 		],
 	];
 
@@ -286,15 +288,17 @@ class Private_Media_Attachment_Manager {
 			return;
 		}
 
-		//delete all files
+		//delete all files (see https://developer.wordpress.org/reference/functions/wp_delete_attachment_files/)
 		$meta         = wp_get_attachment_metadata( $attachment_id );
 		$backup_sizes = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
 		$file         = get_attached_file( $attachment_id );
 		$private_dir  = self::get_data_dir();
 
+		//delete thumbnail
 		if ( ! empty( $meta['thumb'] ) ) {
 			global $wpdb;
 
+			//check if thumbnail is being used
 			if ( ! $wpdb->get_row( $wpdb->prepare( "SELECT meta_id FROM $wpdb->postmeta WHERE meta_key = '_wp_attachment_metadata' AND meta_value LIKE %s AND post_id <> %d", '%' . $wpdb->esc_like( $meta['thumb'] ) . '%', $attachment_id ) ) ) {
 				$thumbfile = str_replace( basename( $file ), $meta['thumb'], $file );
 				$thumbfile = apply_filters( 'wp_delete_file', $thumbfile );
@@ -303,6 +307,7 @@ class Private_Media_Attachment_Manager {
 			}
 		}
 
+		//delete intermediate image sizes
 		if ( isset( $meta['sizes'] ) && is_array( $meta['sizes'] ) ) {
 			foreach ( $meta['sizes'] as $size => $sizeinfo ) {
 				$intermediate_file = str_replace( basename( $file ), $sizeinfo['file'], $file );
@@ -312,6 +317,19 @@ class Private_Media_Attachment_Manager {
 			}
 		}
 
+		//delete original image
+		if ( ! empty( $meta['original_image'] ) ) {
+			$original_image = str_replace( basename( $file ), $meta['original_image'], $file );
+
+			if ( ! empty( $original_image ) ) {
+				$original_image = path_join( $private_dir, $original_image );
+				$original_image = apply_filters( 'wp_delete_file', $original_image );
+
+				@ unlink( $original_image );
+			}
+		}
+
+		//delete backup image sizes
 		if ( is_array( $backup_sizes ) ) {
 			foreach ( $backup_sizes as $size ) {
 				$del_file = path_join( dirname( $meta['file'] ), $size['file'] );
@@ -320,6 +338,9 @@ class Private_Media_Attachment_Manager {
 				@ unlink( path_join( $private_dir, $del_file ) ); // @codingStandardsIgnoreLine
 			}
 		}
+
+		//delete main attachment file
+		@ unlink( $file );
 	}
 
 	/**
