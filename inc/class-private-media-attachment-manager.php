@@ -294,6 +294,9 @@ class Private_Media_Attachment_Manager {
 		$file         = get_attached_file( $attachment_id );
 		$private_dir  = self::get_data_dir();
 
+		//debug
+		//error_log(json_encode($meta));
+
 		//delete thumbnail
 		if ( ! empty( $meta['thumb'] ) ) {
 			global $wpdb;
