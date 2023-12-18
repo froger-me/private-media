@@ -39,6 +39,9 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+= 1.9 =
+* Removes all attachment files on delete.
+
 = 1.8 =
 * fixed manage_media_columns optional parameter
 
