@@ -1,0 +1,58 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Private Media\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-08-26 09:58+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: \n"
+"Language: \n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Loco https://localise.biz/"
+
+#. %1$s is the file owner
+#: inc/class-private-media.php:226
+#, php-format
+msgid " - file owner %1$s"
+msgstr ""
+
+#. Author of the plugin
+msgid "Alexandre Froger"
+msgstr ""
+
+#: inc/class-private-media.php:219
+msgid "Cannot write to the .htaccess file. File system not ready."
+msgstr ""
+
+#. %1$s is the file owner details
+#: inc/class-private-media.php:229
+#, php-format
+msgid ""
+"Cannot write to the .htaccess file. Minimum file permissions required are "
+"600%1$s."
+msgstr ""
+
+#. URI of the plugin
+#. Author URI of the plugin
+msgid "https://froger.me/"
+msgstr ""
+
+#: inc/class-private-media.php:137
+msgid "Media Privacy"
+msgstr ""
+
+#: inc/class-private-media.php:124
+msgid "Prevent hotlinks (even when not limited by role)"
+msgstr ""
+
+#. Name of the plugin
+msgid "Private Media"
+msgstr ""
+
+#. Description of the plugin
+msgid "Private Media: lock your assets"
+msgstr ""
