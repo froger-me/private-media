@@ -3,7 +3,7 @@
 **Contributors:** [frogerme](https://profiles.wordpress.org/frogerme/), [cbratschi](https://profiles.wordpress.org/cbratschi/)
 **Tags:** media, uploads, private
 **Requires at least:** 4.9.8
-**Tested up to:** 6.4.1
+**Tested up to:** 6.4.3
 **Requires PHP:** 8.0
 **Stable tag:** trunk
 **License:** GPLv2 or later
@@ -39,6 +39,10 @@ This section describes how to install the plugin and get it working.
 3. Edit Media Privacy Settings on media items in the Media Library
 
 ## Changelog ##
+
+### 1.10 ###
+
+* PDF preview image workaround.
 
 ### 1.9 ###
 

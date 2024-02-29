@@ -220,6 +220,7 @@ class Private_Media_Request_Handler {
 
 		//PDF preview images
 		$file2 = str_replace( '-pdf.jpg', '.pdf', $file2 );
+		$file2 = str_replace( '-pdf-1.jpg', '.pdf', $file2 ); //Note: seen once (TODO check if RegEx needed)
 
 		//find attachment
 		$query = $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value = %s;", $file2 );
