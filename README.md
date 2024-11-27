@@ -40,6 +40,10 @@ This section describes how to install the plugin and get it working.
 
 ## Changelog ##
 
+### 1.11 ###
+
+* Fixed _load_textdomain_just_in_time warning.
+
 ### 1.10 ###
 
 * PDF preview image workaround.

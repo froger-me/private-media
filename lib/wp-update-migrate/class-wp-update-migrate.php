@@ -102,7 +102,7 @@ if ( ! class_exists( 'WP_Update_Migrate' ) ) {
 				if ( 'plugin' === $this->package_type ) {
 					require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
-					$plugin_data        = get_plugin_data( $package_handle );
+					$plugin_data        = get_plugin_data( $package_handle, false, false );
 					$latest_version     = $plugin_data['Version'];
 					$this->package_name = $plugin_data['Name'];
 					$this->package_dir  = plugin_dir_path( $package_handle );
